@@ -3,7 +3,7 @@
 ## How to start
 - set .env
 - npm install
-- npm run migrate up
+- npm run migrate:up
 - npm run migrate:test up
 - npm run start
 

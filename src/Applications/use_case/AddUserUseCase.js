@@ -1,4 +1,4 @@
-import RegisterUser from '../../Domains/users/entities/RegisterUser';
+import RegisterUser from '../../Domains/users/entities/RegisterUser.js';
 
 class AddUserUseCase {
   constructor({ userRepository, passwordHash }) {

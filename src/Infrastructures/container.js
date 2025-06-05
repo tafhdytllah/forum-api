@@ -1,31 +1,27 @@
 /* istanbul ignore file */
-
 import { createContainer } from 'instances-container';
-
 // external agency
-import { nanoid } from 'nanoid';
-import bcrypt from 'bcrypt';
 import Jwt from '@hapi/jwt';
-import pool from './database/postgres/pool';
-
+import bcrypt from 'bcrypt';
+import { nanoid } from 'nanoid';
+import { pool } from './database/postgres/pool.js';
 // service (repository, helper, manager, etc)
-import UserRepository from '../Domains/users/UserRepository';
-import PasswordHash from '../Applications/security/PasswordHash';
-import UserRepositoryPostgres from './repository/UserRepositoryPostgres';
-import BcryptPasswordHash from './security/BcryptPasswordHash';
-
+import PasswordHash from '../Applications/security/PasswordHash.js';
+import UserRepository from '../Domains/users/UserRepository.js';
+import UserRepositoryPostgres from './repository/UserRepositoryPostgres.js';
+import BcryptPasswordHash from './security/BcryptPasswordHash.js';
 // use case
-import AddUserUseCase from '../Applications/use_case/AddUserUseCase';
-import AuthenticationTokenManager from '../Applications/security/AuthenticationTokenManager';
-import JwtTokenManager from './security/JwtTokenManager';
-import LoginUserUseCase from '../Applications/use_case/LoginUserUseCase';
-import AuthenticationRepository from '../Domains/authentications/AuthenticationRepository';
-import AuthenticationRepositoryPostgres from './repository/AuthenticationRepositoryPostgres';
-import LogoutUserUseCase from '../Applications/use_case/LogoutUserUseCase';
-import RefreshAuthenticationUseCase from '../Applications/use_case/RefreshAuthenticationUseCase';
+import AuthenticationTokenManager from '../Applications/security/AuthenticationTokenManager.js';
+import AddUserUseCase from '../Applications/use_case/AddUserUseCase.js';
+import LoginUserUseCase from '../Applications/use_case/LoginUserUseCase.js';
+import LogoutUserUseCase from '../Applications/use_case/LogoutUserUseCase.js';
+import RefreshAuthenticationUseCase from '../Applications/use_case/RefreshAuthenticationUseCase.js';
+import AuthenticationRepository from '../Domains/authentications/AuthenticationRepository.js';
+import AuthenticationRepositoryPostgres from './repository/AuthenticationRepositoryPostgres.js';
+import JwtTokenManager from './security/JwtTokenManager.js';
 
 // creating container
-const container = createContainer();
+export const container = createContainer();
 
 // registering services and repository
 container.register([
@@ -153,5 +149,3 @@ container.register([
     },
   },
 ]);
-
-export default container;

@@ -1,6 +1,6 @@
-import InvariantError from '../../Commons/exceptions/InvariantError';
-import RegisteredUser from '../../Domains/users/entities/RegisteredUser';
-import UserRepository from '../../Domains/users/UserRepository';
+import InvariantError from '../../Commons/exceptions/InvariantError.js';
+import RegisteredUser from '../../Domains/users/entities/RegisteredUser.js';
+import UserRepository from '../../Domains/users/UserRepository.js';
 
 class UserRepositoryPostgres extends UserRepository {
   constructor(pool, idGenerator) {

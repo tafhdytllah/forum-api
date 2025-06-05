@@ -1,7 +1,7 @@
-import { AuthenticationsTableTestHelper } from '../../../../tests/AuthenticationsTableTestHelper';
-import InvariantError from '../../../Commons/exceptions/InvariantError';
-import { pool } from '../../database/postgres/pool';
-import AuthenticationRepositoryPostgres from '../AuthenticationRepositoryPostgres';
+import { AuthenticationsTableTestHelper } from '../../../../tests/AuthenticationsTableTestHelper.js';
+import InvariantError from '../../../Commons/exceptions/InvariantError.js';
+import { pool } from '../../database/postgres/pool.js';
+import AuthenticationRepositoryPostgres from '../AuthenticationRepositoryPostgres.js';
 
 describe('AuthenticationRepository postgres', () => {
   afterEach(async () => {

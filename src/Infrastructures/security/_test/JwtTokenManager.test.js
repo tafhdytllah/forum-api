@@ -1,6 +1,6 @@
 import Jwt from '@hapi/jwt';
-import InvariantError from '../../../Commons/exceptions/InvariantError';
-import JwtTokenManager from '../JwtTokenManager';
+import InvariantError from '../../../Commons/exceptions/InvariantError.js';
+import JwtTokenManager from '../JwtTokenManager.js';
 
 describe('JwtTokenManager', () => {
   describe('createAccessToken function', () => {

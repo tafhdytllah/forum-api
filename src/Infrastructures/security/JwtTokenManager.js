@@ -1,5 +1,5 @@
-import AuthenticationTokenManager from '../../Applications/security/AuthenticationTokenManager';
-import InvariantError from '../../Commons/exceptions/InvariantError';
+import AuthenticationTokenManager from '../../Applications/security/AuthenticationTokenManager.js';
+import InvariantError from '../../Commons/exceptions/InvariantError.js';
 
 class JwtTokenManager extends AuthenticationTokenManager {
   constructor(jwt) {

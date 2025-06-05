@@ -1,9 +1,9 @@
-import LoginUserUseCase from '../LoginUserUseCase';
-import UserRepository from '../../../Domains/users/UserRepository';
-import PasswordHash from '../../security/PasswordHash';
-import AuthenticationTokenManager from '../../security/AuthenticationTokenManager';
-import AuthenticationRepository from '../../../Domains/authentications/AuthenticationRepository';
-import NewAuth from '../../../Domains/authentications/entities/NewAuth';
+import LoginUserUseCase from '../LoginUserUseCase.js';
+import UserRepository from '../../../Domains/users/UserRepository.js';
+import PasswordHash from '../../security/PasswordHash.js';
+import AuthenticationTokenManager from '../../security/AuthenticationTokenManager.js';
+import AuthenticationRepository from '../../../Domains/authentications/AuthenticationRepository.js';
+import NewAuth from '../../../Domains/authentications/entities/NewAuth.js';
 
 describe('GetAuthenticationUseCase', () => {
   it('should orchestrating the get authentication action correctly', async () => {

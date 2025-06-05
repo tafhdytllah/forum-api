@@ -1,4 +1,4 @@
-import UserRepository from '../UserRepository';
+import UserRepository from '../UserRepository.js';
 
 describe('UserRepository interface', () => {
   it('should throw error when invoke abstract behavior', async () => {

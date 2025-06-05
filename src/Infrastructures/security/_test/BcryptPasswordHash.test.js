@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
-import AuthenticationError from '../../../Commons/exceptions/AuthenticationError';
-import BcryptEncryptionHelper from '../BcryptPasswordHash';
+import AuthenticationError from '../../../Commons/exceptions/AuthenticationError.js';
+import BcryptEncryptionHelper from '../BcryptPasswordHash.js';
 
 describe('BcryptEncryptionHelper', () => {
   describe('hash function', () => {

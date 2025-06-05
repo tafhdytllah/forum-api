@@ -1,5 +1,5 @@
-import DomainErrorTranslator from '../DomainErrorTranslator';
-import InvariantError from '../InvariantError';
+import { DomainErrorTranslator } from '../DomainErrorTranslator.js';
+import InvariantError from '../InvariantError.js';
 
 describe('DomainErrorTranslator', () => {
   it('should translate error correctly', () => {

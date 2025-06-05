@@ -1,9 +1,9 @@
-import { UsersTableTestHelper } from '../../../../tests/UsersTableTestHelper';
-import InvariantError from '../../../Commons/exceptions/InvariantError';
-import RegisterUser from '../../../Domains/users/entities/RegisterUser';
-import RegisteredUser from '../../../Domains/users/entities/RegisteredUser';
-import { pool } from '../../database/postgres/pool';
-import UserRepositoryPostgres from '../UserRepositoryPostgres';
+import { UsersTableTestHelper } from '../../../../tests/UsersTableTestHelper.js';
+import InvariantError from '../../../Commons/exceptions/InvariantError.js';
+import RegisterUser from '../../../Domains/users/entities/RegisterUser.js';
+import RegisteredUser from '../../../Domains/users/entities/RegisteredUser.js';
+import { pool } from '../../database/postgres/pool.js';
+import UserRepositoryPostgres from '../UserRepositoryPostgres.js';
 
 describe('UserRepositoryPostgres', () => {
   afterEach(async () => {

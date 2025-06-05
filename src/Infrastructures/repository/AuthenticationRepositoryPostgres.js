@@ -1,5 +1,5 @@
-import InvariantError from '../../Commons/exceptions/InvariantError';
-import AuthenticationRepository from '../../Domains/authentications/AuthenticationRepository';
+import InvariantError from '../../Commons/exceptions/InvariantError.js';
+import AuthenticationRepository from '../../Domains/authentications/AuthenticationRepository.js';
 
 class AuthenticationRepositoryPostgres extends AuthenticationRepository {
   constructor(pool) {

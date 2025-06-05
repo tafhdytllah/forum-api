@@ -1,8 +1,8 @@
-import AddUserUseCase from '../AddUserUseCase';
-import UserRepository from '../../../Domains/users/UserRepository';
-import PasswordHash from '../../security/PasswordHash';
-import RegisterUser from '../../../Domains/users/entities/RegisterUser';
-import RegisteredUser from '../../../Domains/users/entities/RegisteredUser';
+import AddUserUseCase from '../AddUserUseCase.js';
+import UserRepository from '../../../Domains/users/UserRepository.js';
+import PasswordHash from '../../security/PasswordHash.js';
+import RegisterUser from '../../../Domains/users/entities/RegisterUser.js';
+import RegisteredUser from '../../../Domains/users/entities/RegisteredUser.js';
 
 describe('AddUserUseCase', () => {
   /**

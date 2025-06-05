@@ -1,5 +1,5 @@
-import NotFoundError from '../NotFoundError.js';
-import ClientError from '../ClientError.js';
+import NotFoundError from '../NotFoundError';
+import ClientError from '../ClientError';
 
 describe('NotFoundError', () => {
   it('should create error correctly', () => {

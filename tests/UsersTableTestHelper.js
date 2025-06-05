@@ -1,4 +1,4 @@
-import { pool } from "@/Infrastructures/database/postgres/pool";
+import { pool } from "../src/Infrastructures/database/postgres/pool";
 
 export const UsersTableTestHelper = {
   async addUser({

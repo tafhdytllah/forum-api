@@ -1,5 +1,5 @@
-import AuthenticationError from '../AuthenticationError.js';
-import ClientError from '../ClientError.js';
+import AuthenticationError from '../AuthenticationError';
+import ClientError from '../ClientError';
 
 describe('AuthenticationError', () => {
   it('should create AuthenticationError correctly', () => {

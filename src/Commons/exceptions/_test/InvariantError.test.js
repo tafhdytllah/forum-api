@@ -1,5 +1,5 @@
-import InvariantError from '../InvariantError.js';
-import ClientError from '../ClientError.js';
+import InvariantError from '../InvariantError';
+import ClientError from '../ClientError';
 
 describe('InvariantError', () => {
   it('should create an error correctly', () => {

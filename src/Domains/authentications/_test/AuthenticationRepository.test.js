@@ -1,4 +1,4 @@
-import AuthenticationRepository from '../AuthenticationRepository.js';
+import AuthenticationRepository from '../AuthenticationRepository';
 
 describe('AuthenticationRepository interface', () => {
   it('should throw error when invoke unimplemented method', async () => {

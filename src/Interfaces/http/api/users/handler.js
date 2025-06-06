@@ -3,8 +3,6 @@ import AddUserUseCase from '../../../../Applications/use_case/AddUserUseCase.js'
 class UsersHandler {
   constructor(container) {
     this._container = container;
-
-    this.postUserHandler = this.postUserHandler.bind(this);
   }
 
   async postUserHandler(request, h) {

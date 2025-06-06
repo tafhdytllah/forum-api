@@ -2,6 +2,6 @@ export const routes = (handler) => ([
   {
     method: 'POST',
     path: '/users',
-    handler: handler.postUserHandler,
+    handler: (request, h) => handler.postUserHandler(request, h),
   },
 ]);

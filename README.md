@@ -35,3 +35,4 @@ forum-api/                  → Root Proyek.
 ## API Documentation
 - [Users](/docs/users.md)
 - [Authentications](/docs/authentications.md)
+- [Threads](/docs/threads.md)

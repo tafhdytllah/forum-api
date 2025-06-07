@@ -3,7 +3,9 @@ const InvariantError = require('../../../Commons/exceptions/InvariantError');
 const RegisterUser = require('../../../Domains/users/entities/RegisterUser');
 const RegisteredUser = require('../../../Domains/users/entities/RegisteredUser');
 const pool = require('../../database/postgres/pool');
+const LuxonDateTimeFormatter = require('../../date_time/LuxonDateTimeFormatter');
 const UserRepositoryPostgres = require('../UserRepositoryPostgres');
+const { DateTime } = require('luxon');
 
 describe('UserRepositoryPostgres', () => {
   afterEach(async () => {
@@ -18,7 +20,7 @@ describe('UserRepositoryPostgres', () => {
     it('should throw InvariantError when username not available', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({ username: 'dicoding' }); // memasukan user baru dengan username dicoding
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {}, {});
 
       // Action & Assert
       await expect(userRepositoryPostgres.verifyAvailableUsername('dicoding')).rejects.toThrowError(InvariantError);
@@ -26,7 +28,7 @@ describe('UserRepositoryPostgres', () => {
 
     it('should not throw InvariantError when username available', async () => {
       // Arrange
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {}, {});
 
       // Action & Assert
       await expect(userRepositoryPostgres.verifyAvailableUsername('dicoding')).resolves.not.toThrowError(InvariantError);
@@ -42,7 +44,8 @@ describe('UserRepositoryPostgres', () => {
         fullname: 'Dicoding Indonesia',
       });
       const fakeIdGenerator = () => '123'; // stub!
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, fakeIdGenerator);
+      const dateTimeFormatter = new LuxonDateTimeFormatter(DateTime);
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
 
       // Action
       await userRepositoryPostgres.addUser(registerUser);
@@ -60,7 +63,8 @@ describe('UserRepositoryPostgres', () => {
         fullname: 'Dicoding Indonesia',
       });
       const fakeIdGenerator = () => '123'; // stub!
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, fakeIdGenerator);
+      const dateTimeFormatter = new LuxonDateTimeFormatter(DateTime);
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
 
       // Action
       const registeredUser = await userRepositoryPostgres.addUser(registerUser);
@@ -77,7 +81,7 @@ describe('UserRepositoryPostgres', () => {
   describe('getPasswordByUsername', () => {
     it('should throw InvariantError when user not found', () => {
       // Arrange
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {}, {});
 
       // Action & Assert
       return expect(userRepositoryPostgres.getPasswordByUsername('dicoding'))
@@ -87,7 +91,7 @@ describe('UserRepositoryPostgres', () => {
 
     it('should return username password when user is found', async () => {
       // Arrange
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {}, {});
       await UsersTableTestHelper.addUser({
         username: 'dicoding',
         password: 'secret_password',
@@ -102,7 +106,7 @@ describe('UserRepositoryPostgres', () => {
   describe('getIdByUsername', () => {
     it('should throw InvariantError when user not found', async () => {
       // Arrange
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {}, {});
 
       // Action & Assert
       await expect(userRepositoryPostgres.getIdByUsername('dicoding'))
@@ -113,7 +117,7 @@ describe('UserRepositoryPostgres', () => {
     it('should return user id correctly', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({ id: 'user-321', username: 'dicoding' });
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
+      const userRepositoryPostgres = new UserRepositoryPostgres(pool, {}, {});
 
       // Action
       const userId = await userRepositoryPostgres.getIdByUsername('dicoding');

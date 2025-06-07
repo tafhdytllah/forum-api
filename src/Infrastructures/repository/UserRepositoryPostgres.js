@@ -3,10 +3,11 @@ const RegisteredUser = require('../../Domains/users/entities/RegisteredUser');
 const UserRepository = require('../../Domains/users/UserRepository');
 
 class UserRepositoryPostgres extends UserRepository {
-  constructor(pool, idGenerator) {
+  constructor(pool, idGenerator, dateTimeFormatter) {
     super();
     this._pool = pool;
     this._idGenerator = idGenerator;
+    this._dateTimeFormatter = dateTimeFormatter;
   }
 
   async verifyAvailableUsername(username) {
@@ -25,10 +26,11 @@ class UserRepositoryPostgres extends UserRepository {
   async addUser(registerUser) {
     const { username, password, fullname } = registerUser;
     const id = `user-${this._idGenerator()}`;
+    const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
 
     const query = {
-      text: 'INSERT INTO users VALUES($1, $2, $3, $4) RETURNING id, username, fullname',
-      values: [id, username, password, fullname],
+      text: 'INSERT INTO users(id, username, password, fullname, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING id, username, fullname',
+      values: [id, username, password, fullname, createdAt, createdAt],
     };
 
     const result = await this._pool.query(query);

@@ -7,12 +7,15 @@ const { nanoid } = require('nanoid');
 const bcrypt = require('bcrypt');
 const Jwt = require('@hapi/jwt');
 const pool = require('./database/postgres/pool');
+const { DateTime } = require('luxon');
 
 // service (repository, helper, manager, etc)
 const UserRepository = require('../Domains/users/UserRepository');
 const PasswordHash = require('../Applications/security/PasswordHash');
 const UserRepositoryPostgres = require('./repository/UserRepositoryPostgres');
 const BcryptPasswordHash = require('./security/BcryptPasswordHash');
+const DateTimeFormatter = require('../Applications/date_time/DateTimeFormatter');
+const LuxonDateTimeFormatter = require('./date_time/LuxonDateTimeFormatter');
 
 // use case
 const AddUserUseCase = require('../Applications/use_case/AddUserUseCase');
@@ -30,6 +33,20 @@ const container = createContainer();
 // registering services and repository
 container.register([
   {
+    key: DateTimeFormatter.name,
+    Class: LuxonDateTimeFormatter,
+    parameter: {
+      dependencies: [
+        {
+          concrete: DateTime,
+        },
+      ],
+    },
+  }
+]);
+
+container.register([
+  {
     key: UserRepository.name,
     Class: UserRepositoryPostgres,
     parameter: {
@@ -40,6 +57,9 @@ container.register([
         {
           concrete: nanoid,
         },
+        {
+          internal: DateTimeFormatter.name,
+        }
       ],
     },
   },

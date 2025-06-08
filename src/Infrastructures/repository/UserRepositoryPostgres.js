@@ -29,8 +29,8 @@ class UserRepositoryPostgres extends UserRepository {
     const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
 
     const query = {
-      text: 'INSERT INTO users(id, username, password, fullname, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6) RETURNING id, username, fullname',
-      values: [id, username, password, fullname, createdAt, createdAt],
+      text: 'INSERT INTO users(id, username, password, fullname, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5) RETURNING id, username, fullname',
+      values: [id, username, password, fullname, createdAt],
     };
 
     const result = await this._pool.query(query);

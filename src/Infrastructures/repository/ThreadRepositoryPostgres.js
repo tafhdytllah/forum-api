@@ -30,6 +30,56 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     return new AddedThread({ ...result.rows[0] });
   }
 
+  async getThread(threadId) {
+    const query = {
+      text: `
+        SELECT 
+          t.id AS thread_id,
+          t.title,
+          t.body,
+          t.date AS thread_date,
+          tu.username AS thread_owner_username,
+
+          c.id AS comment_id,
+          c.content AS comment_content,
+          c.date AS comment_date,
+          cu.username AS comment_owner_username
+
+        FROM threads AS t
+        INNER JOIN users AS tu ON t.owner = tu.id
+        INNER JOIN comments AS c ON t.id = c.thread_id
+        INNER JOIN users AS cu ON c.owner = cu.id
+
+        WHERE t.id = $1
+      `,
+      values: [threadId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new NotFoundError("Thread tidak ditemukan");
+    }
+
+    const comments = result.rows.map((comment) => ({
+      id: comment.comment_id,
+      username: comment.comment_owner_username,
+      date: comment.comment_date,
+      content: comment.comment_content
+    }))
+
+    const thread = {
+      id : result.rows[0].thread_id,
+      title : result.rows[0].title,
+      body : result.rows[0].body,
+      date : result.rows[0].thread_date,
+      username : result.rows[0].thread_owner_username,
+      comments: comments
+    }
+
+    return thread;
+  }
+
   async verifyAvailableThread(threadId) {
 
     const query = {

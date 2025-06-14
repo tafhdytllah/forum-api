@@ -25,8 +25,10 @@ const LuxonDateTimeFormatter = require('./date_time/LuxonDateTimeFormatter');
 const LoginUserUseCase = require('../Applications/use_case/LoginUserUseCase');
 const AddUserUseCase = require('../Applications/use_case/AddUserUseCase');
 const LogoutUserUseCase = require('../Applications/use_case/LogoutUserUseCase');
+const DeleteAuthenticationUseCase = require('../Applications/use_case/DeleteAuthenticationUseCase');
 const RefreshAuthenticationUseCase = require('../Applications/use_case/RefreshAuthenticationUseCase');
 const AddThreadUseCase = require('../Applications/use_case/AddThreadUseCase');
+const GetThreadUseCase = require('../Applications/use_case/GetThreadUseCase');
 const AddCommentUseCase = require('../Applications/use_case/AddCommentUseCase');
 
 // creating container
@@ -211,6 +213,19 @@ container.register([
   {
     key: AddThreadUseCase.name,
     Class: AddThreadUseCase,
+    parameter: {
+      injectType: 'destructuring',
+      dependencies: [
+        {
+          name: 'threadRepository',
+          internal: ThreadRepository.name,
+        },
+      ],
+    },
+  },
+  {
+    key: GetThreadUseCase.name,
+    Class: GetThreadUseCase,
     parameter: {
       injectType: 'destructuring',
       dependencies: [

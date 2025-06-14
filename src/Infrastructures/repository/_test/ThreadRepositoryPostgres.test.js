@@ -6,12 +6,14 @@ const { DateTime } = require('luxon');
 const ThreadRepositoryPostgres = require('../ThreadRepositoryPostgres');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
-const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
+const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
 
 describe('ThreadRepositoryPostgres', () => {
   afterEach(async () => {
+    await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
+    jest.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -70,6 +72,64 @@ describe('ThreadRepositoryPostgres', () => {
         .toThrowError('thread gagal ditambahkan');
     });
   });
+
+  describe('getThread function', () => {
+    afterEach(async () => {
+      await ThreadsTableTestHelper.cleanTable();
+      await UsersTableTestHelper.cleanTable();
+      await CommentsTableTestHelper.cleanTable();
+      jest.restoreAllMocks();
+    });
+
+    it('should throw NotFoundError when thread is not found', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      // Mock pool agar hasilnya rowCount = 0
+      jest.spyOn(pool, 'query').mockResolvedValue({ rowCount: 0, rows: [] });
+
+      await expect(
+        threadRepositoryPostgres.getThread('thread-notfound')
+      ).rejects.toThrowError(NotFoundError);
+    });
+
+    it('should return comments for valid thread id', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-1', username: 'user1' });
+      await UsersTableTestHelper.addUser({ id: 'user-2', username: 'user2' });
+
+      await ThreadsTableTestHelper.addThread({
+        id: 'thread-123',
+        title: 'Sample Thread',
+        body: 'Sample Body',
+        owner: 'user-1',
+      });
+
+      await CommentsTableTestHelper.addComment({
+        id: 'comment-456',
+        content: 'Nice thread!',
+        threadId: 'thread-123',
+        owner: 'user-2',
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      // Act
+      const result = await threadRepositoryPostgres.getThread('thread-123');
+
+      expect(result.id).toEqual('thread-123');
+      expect(result.title).toEqual('Sample Thread');
+      expect(result.body).toEqual('Sample Body');
+      expect(result.username).toEqual('user1');
+
+      expect(result.comments).toHaveLength(1);
+      expect(result.comments[0]).toMatchObject({
+        id: 'comment-456',
+        username: 'user2',
+        content: 'Nice thread!',
+      });
+    });
+  });
+
 
   describe('verifyAvailableThread function', () => {
     it('should throw NotFoundError when thread is not found', async () => {

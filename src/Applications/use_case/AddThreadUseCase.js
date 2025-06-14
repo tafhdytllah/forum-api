@@ -10,11 +10,7 @@ class AddThreadUseCase {
     const { id: owner } = auth.credentials;
     const { title, body } = payload;
 
-    const addThread = new AddThread({
-      title,
-      body,
-      owner,
-    });
+    const addThread = new AddThread({ title, body, owner});
     
     return this._threadRepository.addThread(addThread);
   }

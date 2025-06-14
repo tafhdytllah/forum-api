@@ -1,6 +1,8 @@
 const InvariantError = require('../../Commons/exceptions/InvariantError');
 const AddedComment = require('../../Domains/comments/entities/AddedComment');
 const CommentRepository = require('../../Domains/comments/CommentRepository');
+const AuthorizationError = require('../../Commons/exceptions/AuthorizationError');
+const NotFoundError = require('../../Commons/exceptions/NotFoundError');
 
 class RepositoryPostgres extends CommentRepository {
   constructor(pool, idGenerator, dateTimeFormatter) {
@@ -26,6 +28,39 @@ class RepositoryPostgres extends CommentRepository {
     }
 
     return new AddedComment({ ...result.rows[0] });
+  }
+
+  async verifyCommentOwner(commentId, owner) {
+    const query = {
+      text: 'SELECT * FROM comments WHERE id = $1',
+      values: [commentId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new NotFoundError('comment tidak ditemukan');
+    }
+
+    const comment = result.rows[0];
+    if (comment.owner !== owner) {
+      throw new AuthorizationError('Anda tidak berhak mengakses comment ini');
+    }
+  }
+
+  async softDeleteCommentById(commentId) {
+    const query = {
+      text: 'UPDATE comments SET is_deleted = TRUE WHERE id = $1 RETURNING id',
+      values: [commentId],
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new InvariantError('comment gagal dihapus');
+    }
+
+    return result.rows[0].id;
   }
 }
 

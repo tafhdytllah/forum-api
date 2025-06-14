@@ -16,4 +16,12 @@ describe('CommentRepository interface', () => {
     // Action and Assert
     await expect(commentRepository.verifyCommentOwner('user-123', 'thread-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   });
+
+  it('should throw error when invoke abstract behavior', async () => {
+    // Arrange
+    const commentRepository = new CommentRepository();
+
+    // Action and Assert
+    await expect(commentRepository.softDeleteCommentById('thread-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+  });
 });

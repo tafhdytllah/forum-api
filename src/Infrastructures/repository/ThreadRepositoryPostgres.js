@@ -43,7 +43,8 @@ class ThreadRepositoryPostgres extends ThreadRepository {
           c.id AS comment_id,
           c.content AS comment_content,
           c.date AS comment_date,
-          cu.username AS comment_owner_username
+          cu.username AS comment_owner_username,
+          c.is_deleted as comment_is_deleted
 
         FROM threads AS t
         INNER JOIN users AS tu ON t.owner = tu.id
@@ -58,14 +59,14 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
-      throw new NotFoundError("Thread tidak ditemukan");
+      throw new NotFoundError("thread tidak ditemukan");
     }
 
     const comments = result.rows.map((comment) => ({
       id: comment.comment_id,
       username: comment.comment_owner_username,
       date: comment.comment_date,
-      content: comment.comment_content
+      content: comment.comment_is_deleted ? '**komentar telah dihapus**' : comment.comment_content
     }))
 
     const thread = {
@@ -90,7 +91,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
-      throw new NotFoundError('Thread tidak ditemukan');
+      throw new NotFoundError('thread tidak ditemukan');
     }
   }
 }

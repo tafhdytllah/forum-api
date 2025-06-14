@@ -48,33 +48,38 @@ describe('UserRepositoryPostgres', () => {
       const userRepositoryPostgres = new UserRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
 
       // Action
-      await userRepositoryPostgres.addUser(registerUser);
-
-      // Assert
+      const registeredUser = await userRepositoryPostgres.addUser(registerUser);
       const users = await UsersTableTestHelper.findUsersById('user-123');
+
       expect(users).toHaveLength(1);
+      expect(registeredUser).toStrictEqual(new RegisteredUser({
+        id: 'user-123',
+        username: 'dicoding',
+        fullname: 'Dicoding Indonesia',
+      }));
     });
 
-    it('should return registered user correctly', async () => {
+    it('should throw InvariantError when addUser fails to insert data', async () => {
       // Arrange
       const registerUser = new RegisterUser({
         username: 'dicoding',
         password: 'secret_password',
         fullname: 'Dicoding Indonesia',
       });
-      const fakeIdGenerator = () => '123'; // stub!
-      const dateTimeFormatter = new LuxonDateTimeFormatter(DateTime);
-      const userRepositoryPostgres = new UserRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
 
-      // Action
-      const registeredUser = await userRepositoryPostgres.addUser(registerUser);
+      // Stub pool.query agar return rowCount = 0
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      };
 
-      // Assert
-      expect(registeredUser).toStrictEqual(new RegisteredUser({
-        id: 'user-123',
-        username: 'dicoding',
-        fullname: 'Dicoding Indonesia',
-      }));
+      const userRepositoryPostgres = new UserRepositoryPostgres(fakePool, () => '123', {
+        formatDateTime: () => '2024-06-14T00:00:00.000Z',
+      });
+
+      // Action & Assert
+      await expect(userRepositoryPostgres.addUser(registerUser))
+        .rejects
+        .toThrowError('user gagal ditambahkan');
     });
   });
 

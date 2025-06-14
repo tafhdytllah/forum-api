@@ -11,13 +11,23 @@ const UsersTableTestHelper = {
       values: [id, username, password, fullname, createdAt],
     };
 
-    await pool.query(query);
+    return await pool.query(query);
   },
 
   async findUsersById(id) {
     const query = {
       text: 'SELECT * FROM users WHERE id = $1',
       values: [id],
+    };
+
+    const result = await pool.query(query);
+    return result.rows;
+  },
+
+  async findUserByUsername(username) {
+    const query = {
+      text: 'SELECT * FROM users WHERE username = $1',
+      values: [username],
     };
 
     const result = await pool.query(query);

@@ -5,6 +5,8 @@ const LuxonDateTimeFormatter = require('../../date_time/LuxonDateTimeFormatter')
 const { DateTime } = require('luxon');
 const ThreadRepositoryPostgres = require('../ThreadRepositoryPostgres');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
+const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
+const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
 
 describe('ThreadRepositoryPostgres', () => {
   afterEach(async () => {
@@ -23,7 +25,9 @@ describe('ThreadRepositoryPostgres', () => {
       const dateTimeFormatter = new LuxonDateTimeFormatter(DateTime);
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
 
-      await UsersTableTestHelper.addUser({ id: 'user-123' });
+      await UsersTableTestHelper.addUser({
+        id: 'user-123'
+      });
 
       const addThread = new AddThread({
         title: 'ini title',
@@ -42,5 +46,75 @@ describe('ThreadRepositoryPostgres', () => {
       expect(threads).toHaveLength(1);
     });
 
+    it('should throw InvariantError when addThread fails to insert', async () => {
+      // Arrange
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      };
+      const fakeIdGenerator = () => '123';
+      const fakeDateTimeFormatter = {
+        formatDateTime: () => '2024-06-14T00:00:00.000Z',
+      };
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(fakePool, fakeIdGenerator, fakeDateTimeFormatter);
+
+      const addThread = {
+        title: 'title',
+        body: 'body',
+        owner: 'user-123',
+      };
+
+      // Action & Assert
+      await expect(threadRepositoryPostgres.addThread(addThread))
+        .rejects
+        .toThrowError('thread gagal ditambahkan');
+    });
   });
+
+  describe('verifyThreadOwner function', () => {
+    it('should throw NotFoundError when thread is not found', async () => {
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      await expect(threadRepositoryPostgres.verifyThreadOwner('thread-404', 'user-123'))
+        .rejects
+        .toThrowError(NotFoundError);
+    });
+
+    it('should throw AuthorizationError when user is not the owner of the thread', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-123', username: 'user_a' });
+      await UsersTableTestHelper.addUser({ id: 'user-999', username: 'user_b' });
+      await ThreadsTableTestHelper.addThread({
+        id: 'thread-123',
+        title: 'title',
+        body: 'body',
+        owner: 'user-999',
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      // Action & Assert
+      await expect(threadRepositoryPostgres.verifyThreadOwner('thread-123', 'user-123'))
+        .rejects
+        .toThrowError(AuthorizationError);
+    });
+
+    it('should not throw error if user is the owner of the thread', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-123' });
+      await ThreadsTableTestHelper.addThread({
+        id: 'thread-123',
+        title: 'title',
+        body: 'body',
+        owner: 'user-123',
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      // Action & Assert
+      await expect(threadRepositoryPostgres.verifyThreadOwner('thread-123', 'user-123'))
+        .resolves.not.toThrow();
+    });
+  });
+
 });

@@ -13,7 +13,11 @@ class AuthenticationRepositoryPostgres extends AuthenticationRepository {
       values: [token],
     };
 
-    await this._pool.query(query);
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new InvariantError('token gagal ditambahkan');
+    }
   }
 
   async checkAvailabilityToken(token) {
@@ -24,7 +28,7 @@ class AuthenticationRepositoryPostgres extends AuthenticationRepository {
 
     const result = await this._pool.query(query);
 
-    if (result.rows.length === 0) {
+    if (!result.rowCount) {
       throw new InvariantError('refresh token tidak ditemukan di database');
     }
   }
@@ -35,7 +39,11 @@ class AuthenticationRepositoryPostgres extends AuthenticationRepository {
       values: [token],
     };
 
-    await this._pool.query(query);
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new InvariantError('token gagal dihapus');
+    }
   }
 }
 

@@ -34,6 +34,9 @@ class UserRepositoryPostgres extends UserRepository {
     };
 
     const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new InvariantError('user gagal ditambahkan');
+    }
 
     return new RegisteredUser({ ...result.rows[0] });
   }
@@ -65,9 +68,7 @@ class UserRepositoryPostgres extends UserRepository {
       throw new InvariantError('user tidak ditemukan');
     }
 
-    const { id } = result.rows[0];
-
-    return id;
+    return result.rows[0].id;
   }
 }
 

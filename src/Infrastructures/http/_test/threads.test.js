@@ -20,45 +20,56 @@ describe('/threads endpoint', () => {
     it('should response 201 and persisted threads', async () => {
       const server = await createServer(container);
 
+      const addUserPayload = {
+        username: 'dicoding',
+        password: 'secret',
+        fullname: 'Test User',
+      }
+
+      const loginPayload = {
+        username: addUserPayload.username,
+        password: addUserPayload.password,
+      }
+
+      const addThreadPayload = {
+        title: 'ini title',
+        body: 'ini body',
+      };
+
       await server.inject({
         method: 'POST',
         url: '/users',
-        payload: {
-          username: 'dicoding',
-          password: 'secret',
-          fullname: 'Test User',
-        },
+        payload: addUserPayload,
       });
 
       const loginResponse = await server.inject({
         method: 'POST',
         url: '/authentications',
-        payload: {
-          username: 'dicoding',
-          password: 'secret',
-        },
+        payload: loginPayload,
       });
 
-      const { data: { accessToken } } = JSON.parse(loginResponse.payload);
+      const loginResponseJson = JSON.parse(loginResponse.payload);
+      const accessToken = loginResponseJson?.data?.accessToken;
+      const users = await UsersTableTestHelper.findUserByUsername(addUserPayload.username);
+      const userId = users[0].id;
 
-      const requestPayload = {
-        title: 'ini title',
-        body: 'ini body',
-      };
-
-      const response = await server.inject({
+      const addedThreadResponse = await server.inject({
         method: 'POST',
         url: '/threads',
-        payload: requestPayload,
+        payload: addThreadPayload,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      const responseJson = JSON.parse(response.payload);
-      expect(response.statusCode).toEqual(201);
+      const responseJson = JSON.parse(addedThreadResponse.payload);
+
+      expect(addedThreadResponse.statusCode).toEqual(201);
       expect(responseJson.status).toEqual('success');
       expect(responseJson.data.addedThread).toBeDefined();
+      expect(responseJson.data.addedThread.id).toBeDefined();
+      expect(responseJson.data.addedThread.title).toEqual(addThreadPayload.title);
+      expect(responseJson.data.addedThread.owner).toEqual(userId);
     });
 
     it('should response 400 when request payload not contain needed property', async () => {
@@ -84,7 +95,8 @@ describe('/threads endpoint', () => {
         },
       });
 
-      const { data: { accessToken } } = JSON.parse(loginResponse.payload);
+      const loginResponseJson = JSON.parse(loginResponse.payload);
+      const accessToken = loginResponseJson?.data?.accessToken;
 
       // Missing 'title' property
       const invalidPayload = {
@@ -131,7 +143,8 @@ describe('/threads endpoint', () => {
         },
       });
 
-      const { data: { accessToken } } = JSON.parse(loginResponse.payload);
+      const loginResponseJson = JSON.parse(loginResponse.payload);
+      const accessToken = loginResponseJson?.data?.accessToken;
 
       // Payload salah: body harus string, tapi dikirim array
       const invalidPayload = {

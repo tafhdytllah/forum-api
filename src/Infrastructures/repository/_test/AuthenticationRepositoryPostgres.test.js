@@ -13,6 +13,19 @@ describe('AuthenticationRepository postgres', () => {
   });
 
   describe('addToken function', () => {
+    it('should throw InvariantError if token not added', async () => {
+      // Arrange
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }), // Simulasi insert gagal
+      };
+      const authenticationRepository = new AuthenticationRepositoryPostgres(fakePool);
+      const token = 'token';
+
+      // Action & Assert
+      await expect(authenticationRepository.addToken(token))
+        .rejects.toThrow(InvariantError);
+    });
+
     it('should add token to database', async () => {
       // Arrange
       const authenticationRepository = new AuthenticationRepositoryPostgres(pool);
@@ -52,6 +65,16 @@ describe('AuthenticationRepository postgres', () => {
   });
 
   describe('deleteToken', () => {
+    it('should throw InvariantError if token not deleted', async () => {
+      // Arrange
+      const authenticationRepository = new AuthenticationRepositoryPostgres(pool);
+      const token = 'token';
+
+      // Action & Assert
+      await expect(authenticationRepository.deleteToken(token))
+        .rejects.toThrow(InvariantError);
+    });
+
     it('should delete token from database', async () => {
       // Arrange
       const authenticationRepository = new AuthenticationRepositoryPostgres(pool);

@@ -30,22 +30,17 @@ class ThreadRepositoryPostgres extends ThreadRepository {
     return new AddedThread({ ...result.rows[0] });
   }
 
-  async verifyThreadOwner(id, owner) {
+  async verifyAvailableThread(threadId) {
+
     const query = {
       text: 'SELECT * FROM threads WHERE id = $1',
-      values: [id],
+      values: [threadId],
     };
 
     const result = await this._pool.query(query);
 
     if (!result.rowCount) {
       throw new NotFoundError('Thread tidak ditemukan');
-    }
-
-    const thread = result.rows[0];
-
-    if (thread.owner !== owner) {
-      throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
     }
   }
 }

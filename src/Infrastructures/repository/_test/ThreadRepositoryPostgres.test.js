@@ -124,70 +124,24 @@ describe('ThreadRepositoryPostgres', () => {
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
       // Act
-      const result = await threadRepositoryPostgres.getThread('thread-123');
+      const results = await threadRepositoryPostgres.getThread('thread-123');
 
-      // Assert thread
-      expect(result.id).toEqual('thread-123');
+      // Assert
+      expect(results.length).toEqual(1);
+      const result = results[0];
+      expect(result.thread_id).toEqual('thread-123');
       expect(result.title).toEqual('Sample Thread');
       expect(result.body).toEqual('Sample Body');
-      expect(result.username).toEqual('user1');
-
-      // Assert comments
-      expect(result.comments).toHaveLength(1);
-      expect(result.comments[0]).toMatchObject({
-        id: 'comment-456',
-        username: 'user2',
-        content: 'Nice thread!',
-      });
-
-      // Assert replies
-      const replies = result.comments[0].replies;
-      expect(replies).toHaveLength(1);
-      expect(replies[0]).toMatchObject({
-        id: 'reply-999',
-        content: 'This is a reply',
-        username: 'user1',
-      });
-    });
-
-    it('should return **komentar telah dihapus** and **balasan telah dihapus** if is_deleted = true', async () => {
-      // Arrange
-      await UsersTableTestHelper.addUser({ id: 'user-1', username: 'user1' });
-      await UsersTableTestHelper.addUser({ id: 'user-2', username: 'user2' });
-
-      await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Thread with Deleted',
-        body: 'Body here',
-        owner: 'user-1',
-      });
-
-      await CommentsTableTestHelper.addComment({
-        id: 'comment-456',
-        content: 'original comment',
-        threadId: 'thread-123',
-        owner: 'user-2',
-        isDeleted: true,
-      });
-
-      await RepliesTableTestHelper.addReply({
-        id: 'reply-789',
-        content: 'original reply',
-        commentId: 'comment-456',
-        owner: 'user-1',
-        isDeleted: true,
-      });
-
-      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
-
-      // Act
-      const result = await threadRepositoryPostgres.getThread('thread-123');
-
-      const comment = result.comments.find(c => c.id === 'comment-456');
-      expect(comment.content).toBe('**komentar telah dihapus**');
-
-      const reply = comment.replies.find(r => r.id === 'reply-789');
-      expect(reply.content).toBe('**balasan telah dihapus**');
+      expect(result.thread_owner_username).toEqual('user1');
+      expect(result.comment_id).toEqual('comment-456');
+      expect(result.comment_content).toEqual('Nice thread!');
+      expect(result.comment_owner_username).toEqual('user2');
+      expect(result.comment_is_deleted).toEqual(false);
+      expect(result.reply_id).toEqual('reply-999');
+      expect(result.reply_content).toEqual('This is a reply');
+      expect(result.reply_comment_id).toEqual('comment-456');
+      expect(result.reply_is_deleted).toEqual(false);
+      expect(result.reply_owner_username).toEqual('user1');
     });
   });
 

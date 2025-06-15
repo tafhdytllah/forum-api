@@ -7,6 +7,7 @@ const ThreadRepositoryPostgres = require('../ThreadRepositoryPostgres');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
+const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
 
 describe('ThreadRepositoryPostgres', () => {
   afterEach(async () => {
@@ -78,6 +79,7 @@ describe('ThreadRepositoryPostgres', () => {
       await ThreadsTableTestHelper.cleanTable();
       await UsersTableTestHelper.cleanTable();
       await CommentsTableTestHelper.cleanTable();
+      await RepliesTableTestHelper.cleanTable();
       jest.restoreAllMocks();
     });
 
@@ -92,7 +94,7 @@ describe('ThreadRepositoryPostgres', () => {
       ).rejects.toThrowError(NotFoundError);
     });
 
-    it('should return comments for valid thread id', async () => {
+    it('should return thread with comments and replies correctly', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({ id: 'user-1', username: 'user1' });
       await UsersTableTestHelper.addUser({ id: 'user-2', username: 'user2' });
@@ -111,25 +113,83 @@ describe('ThreadRepositoryPostgres', () => {
         owner: 'user-2',
       });
 
+      await RepliesTableTestHelper.addReply({
+        id: 'reply-999',
+        content: 'This is a reply',
+        commentId: 'comment-456',
+        owner: 'user-1',
+        isDeleted: false,
+      });
+
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
       // Act
       const result = await threadRepositoryPostgres.getThread('thread-123');
 
+      // Assert thread
       expect(result.id).toEqual('thread-123');
       expect(result.title).toEqual('Sample Thread');
       expect(result.body).toEqual('Sample Body');
       expect(result.username).toEqual('user1');
 
+      // Assert comments
       expect(result.comments).toHaveLength(1);
       expect(result.comments[0]).toMatchObject({
         id: 'comment-456',
         username: 'user2',
         content: 'Nice thread!',
       });
+
+      // Assert replies
+      const replies = result.comments[0].replies;
+      expect(replies).toHaveLength(1);
+      expect(replies[0]).toMatchObject({
+        id: 'reply-999',
+        content: 'This is a reply',
+        username: 'user1',
+      });
+    });
+
+    it('should return **komentar telah dihapus** and **balasan telah dihapus** if is_deleted = true', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-1', username: 'user1' });
+      await UsersTableTestHelper.addUser({ id: 'user-2', username: 'user2' });
+
+      await ThreadsTableTestHelper.addThread({
+        id: 'thread-123',
+        title: 'Thread with Deleted',
+        body: 'Body here',
+        owner: 'user-1',
+      });
+
+      await CommentsTableTestHelper.addComment({
+        id: 'comment-456',
+        content: 'original comment',
+        threadId: 'thread-123',
+        owner: 'user-2',
+        isDeleted: true,
+      });
+
+      await RepliesTableTestHelper.addReply({
+        id: 'reply-789',
+        content: 'original reply',
+        commentId: 'comment-456',
+        owner: 'user-1',
+        isDeleted: true,
+      });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      // Act
+      const result = await threadRepositoryPostgres.getThread('thread-123');
+
+      const comment = result.comments.find(c => c.id === 'comment-456');
+      expect(comment.content).toBe('**komentar telah dihapus**');
+
+      const reply = comment.replies.find(r => r.id === 'reply-789');
+      expect(reply.content).toBe('**balasan telah dihapus**');
     });
   });
-
 
   describe('verifyAvailableThread function', () => {
     it('should throw NotFoundError when thread is not found', async () => {

@@ -1,6 +1,6 @@
 const pool = require('../../database/postgres/pool');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
-const AddComment = require('../../../Domains/comments/entities/AddComment');
+const AddReply = require('../../../Domains/replies/entities/AddReply');
 const LuxonDateTimeFormatter = require('../../date_time/LuxonDateTimeFormatter');
 const { DateTime } = require('luxon');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
@@ -9,9 +9,12 @@ const CommentRepositoryPostgres = require('../CommentRepositoryPostgres');
 const InvariantError = require('../../../Commons/exceptions/InvariantError');
 const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
+const ReplyRepositoryPostgres = require('../ReplyRepositoryPostgres');
+const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
 
-describe('CommentRepositoryPostgres', () => {
+describe('ReplyRepositoryPostgres', () => {
   afterEach(async () => {
+    await RepliesTableTestHelper.cleanTable();
     await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
@@ -21,8 +24,8 @@ describe('CommentRepositoryPostgres', () => {
     await pool.end();
   });
 
-  describe('addComment function', () => {
-    it('should throw InvariantError if comment not added', async () => {
+  describe('addReply function', () => {
+    it('should throw InvariantError if reply not added', async () => {
       const fakePool = {
         query: jest.fn().mockResolvedValue({ rowCount: 0 }), // Simulasi gagal insert
       };
@@ -32,23 +35,23 @@ describe('CommentRepositoryPostgres', () => {
         formatDateTime: () => '2025-01-01T00:00:00.000Z',
       };
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(
         fakePool,
         fakeIdGenerator,
         fakeDateTimeFormatter
       );
 
-      const fakeCommentPayload = {
-        content: 'a comment',
-        threadId: 'thread-123',
+      const fakeReplyPayload = {
+        content: 'a reply',
+        commentId: 'comment-123',
         owner: 'user-123',
       };
 
-      await expect(commentRepositoryPostgres.addComment(fakeCommentPayload))
+      await expect(replyRepositoryPostgres.addReply(fakeReplyPayload))
         .rejects.toThrow(InvariantError);
     });
 
-    it('should persist add comment and return add comment correctly', async () => {
+    it('should persist add reply and return add reply correctly', async () => {
 
       await UsersTableTestHelper.addUser({
         id: 'user-123',
@@ -64,26 +67,33 @@ describe('CommentRepositoryPostgres', () => {
         owner: 'user-123',
       });
 
-      const addComment = new AddComment({
+      await CommentsTableTestHelper.addComment({
+        id: 'comment-123',
         content: 'ini comment',
         threadId: 'thread-123',
         owner: 'user-123',
       });
 
+      const addReply = new AddReply({
+        content: 'ini reply',
+        commentId: 'comment-123',
+        owner: 'user-123',
+      });
+
       const fakeIdGenerator = () => '123'; // stub!
       const dateTimeFormatter = new LuxonDateTimeFormatter(DateTime);
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
 
-      await commentRepositoryPostgres.addComment(addComment);
+      await replyRepositoryPostgres.addReply(addReply);
 
-      const comments = await CommentsTableTestHelper.findCommentsById('comment-123');
+      const reply = await RepliesTableTestHelper.findReplyById('reply-123');
 
-      expect(comments).toHaveLength(1);
+      expect(reply).toHaveLength(1);
     });
   });
 
-  describe('verifyCommentOwner function', () => {
-    it('should throw InvariantError if comment not available', async () => {
+  describe('verifyReplyOwner function', () => {
+    it('should throw InvariantError if reply not available', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({
         id: 'user-123',
@@ -92,15 +102,15 @@ describe('CommentRepositoryPostgres', () => {
         fullname: 'Dicoding Indonesia',
       });
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
       // Act & Assert
       await expect(
-        commentRepositoryPostgres.verifyCommentOwner('comment-not-found', 'user-123')
+        replyRepositoryPostgres.verifyReplyOwner('reply-not-found', 'user-123')
       ).rejects.toThrow(NotFoundError);
     });
 
-    it('should throw AuthorizationError if comment not owned by user', async () => {
+    it('should throw AuthorizationError if reply not owned by user', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({
         id: 'user-123',
@@ -130,15 +140,22 @@ describe('CommentRepositoryPostgres', () => {
         owner: 'user-123',
       });
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+      await RepliesTableTestHelper.addReply({
+        id: 'reply-123',
+        content: 'ini reply',
+        commentId: 'comment-123',
+        owner: 'user-123',
+      });
+
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
       // Act & Assert
       await expect(
-        commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-456')
+        replyRepositoryPostgres.verifyReplyOwner('reply-123', 'user-456')
       ).rejects.toThrow(AuthorizationError);
     });
 
-    it('should not throw error if comment is owned by user', async () => {
+    it('should not throw error if reply is owned by user', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({
         id: 'user-123',
@@ -161,61 +178,32 @@ describe('CommentRepositoryPostgres', () => {
         owner: 'user-123',
       });
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+      await RepliesTableTestHelper.addReply({
+        id: 'reply-123',
+        content: 'ini reply',
+        commentId: 'comment-123',
+        owner: 'user-123',
+      });
+
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
       // Act & Assert
       await expect(
-        commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-123')
+        replyRepositoryPostgres.verifyReplyOwner('reply-123', 'user-123')
       ).resolves.not.toThrow();
     });
   });
 
-  describe('verifyAvailableComment function', () => {
-    it('should throw InvariantError if comment not found', async () => {
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
-      await expect(commentRepositoryPostgres.verifyAvailableComment('comment-123'))
-        .rejects.toThrow(NotFoundError);
-    })
+  describe('softDeletReplyById', () => {
+    it('should throw InvariantError if reply not found', async () => {
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
-    it('should not throw error if comment is found', async () => {
-      await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      })
-
-      await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Sebuah thread',
-        body: 'Isi dari thread',
-        owner: 'user-123',
-      });
-
-      await CommentsTableTestHelper.addComment({
-        id: 'comment-123',
-        content: 'ini comment',
-        threadId: 'thread-123',
-        owner: 'user-123',
-      });
-
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
-
-      await expect(commentRepositoryPostgres.verifyAvailableComment('comment-123'))
-        .resolves.not.toThrow();
-    })
-  });
-
-  describe('softDeleteCommentById function', () => {
-    it('should throw InvariantError if comment not found', async () => {
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
-
-      await expect(commentRepositoryPostgres.softDeleteCommentById('comment-123'))
+      await expect(replyRepositoryPostgres.softDeleteReplyById('reply-123'))
         .rejects.toThrow(InvariantError);
     });
 
-    it('should soft delete comment correctly', async () => {
+    it('should soft delete reply correctly', async () => {
       await UsersTableTestHelper.addUser({
         id: 'user-123',
         username: 'dicoding',
@@ -237,13 +225,20 @@ describe('CommentRepositoryPostgres', () => {
         owner: 'user-123',
       });
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+      await RepliesTableTestHelper.addReply({
+        id: 'reply-123',
+        content: 'ini reply',
+        commentId: 'comment-123',
+        owner: 'user-123',
+      });
 
-      await commentRepositoryPostgres.softDeleteCommentById('comment-123');
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
-      const comments = await CommentsTableTestHelper.findCommentsById('comment-123');
-      expect(comments).toHaveLength(1);
-      expect(comments[0].is_deleted).toBe(true);
+      await replyRepositoryPostgres.softDeleteReplyById('reply-123');
+
+      const reply = await RepliesTableTestHelper.findReplyById('reply-123');
+      expect(reply).toHaveLength(1);
+      expect(reply[0].is_deleted).toBe(true);
     });
   })
 });

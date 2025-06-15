@@ -3,13 +3,13 @@ const pool = require('../src/Infrastructures/database/postgres/pool');
 
 const CommentsTableTestHelper = {
   async addComment({
-    id = 'comment-123', content = 'Sebuah comment', threadId = 'thread-123', owner = 'user-123',
+    id = 'comment-123', content = 'Sebuah comment', threadId = 'thread-123', owner = 'user-123', isDeleted = false,
   }) {
     const createdAt = new Date('2024-01-01T00:00:00+07:00');
 
     const query = {
-      text: 'INSERT INTO comments(id, thread_id, content, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5)',
-      values: [id, threadId, content, owner, createdAt],
+      text: 'INSERT INTO comments(id, thread_id, content, owner, is_deleted, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $6, $6, $6)',
+      values: [id, threadId, content, owner, isDeleted, createdAt],
     };
     await pool.query(query);
   },

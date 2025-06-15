@@ -17,7 +17,7 @@ describe('DeleteCommentUseCase', () => {
     const mockCommentRepository = new CommentRepository();
 
     mockThreadRepository.verifyAvailableThread = jest.fn()
-      .mockImplementation(() => { throw new NotFoundError('Thread not found'); });
+      .mockImplementation(() => { throw new NotFoundError('thread not found'); });
 
     const deleteCommentUseCase = new DeleteCommentUseCase({
       threadRepository: mockThreadRepository,
@@ -38,7 +38,7 @@ describe('DeleteCommentUseCase', () => {
 
     mockThreadRepository.verifyAvailableThread = jest.fn().mockResolvedValue();
     mockCommentRepository.verifyCommentOwner = jest.fn()
-      .mockImplementation(() => { throw new NotFoundError('Comment not found'); });
+      .mockImplementation(() => { throw new NotFoundError('comment not found'); });
 
     const deleteCommentUseCase = new DeleteCommentUseCase({
       threadRepository: mockThreadRepository,
@@ -59,7 +59,7 @@ describe('DeleteCommentUseCase', () => {
 
     mockThreadRepository.verifyAvailableThread = jest.fn().mockResolvedValue();
     mockCommentRepository.verifyCommentOwner = jest.fn()
-      .mockImplementation(() => { throw new AuthorizationError('Not the owner'); });
+      .mockImplementation(() => { throw new AuthorizationError('not the owner'); });
 
     const deleteCommentUseCase = new DeleteCommentUseCase({
       threadRepository: mockThreadRepository,

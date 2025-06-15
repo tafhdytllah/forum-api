@@ -194,6 +194,10 @@ describe('/threads endpoint', () => {
         content: 'ini comment',
       };
 
+      const addReplyPayload = {
+        content: 'ini reply',
+      };
+
       await server.inject({
         method: 'POST',
         url: '/users',
@@ -223,7 +227,7 @@ describe('/threads endpoint', () => {
       const addedThreadResponseJson = JSON.parse(addedThreadResponse.payload);
       const addedThread = addedThreadResponseJson?.data?.addedThread;
 
-      await server.inject({
+      const addedCommentResponse = await server.inject({
         method: 'POST',
         url: `/threads/${addedThread.id}/comments`,
         payload: addCommentPayload,
@@ -232,23 +236,49 @@ describe('/threads endpoint', () => {
         },
       });
 
+      const addedCommentResponseJson = JSON.parse(addedCommentResponse.payload);
+      const commentId = addedCommentResponseJson.data.addedComment.id;
+
+      await server.inject({
+        method: 'POST',
+        url: `/threads/${addedThread.id}/comments/${commentId}/replies`,
+        payload: addReplyPayload,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
       // Act
       const getThreadResponse = await server.inject({
         method: 'GET',
-        url: `/threads/${addedThread.id}`, // BENAR
+        url: `/threads/${addedThread.id}`,
       });
 
       // Assert
       const responseJson = JSON.parse(getThreadResponse.payload);
       expect(getThreadResponse.statusCode).toEqual(200);
       expect(responseJson.status).toEqual('success');
-      expect(responseJson.data.thread).toBeDefined();
-      expect(responseJson.data.thread.id).toEqual(addedThread.id);
-      expect(responseJson.data.thread.title).toEqual(addThreadPayload.title);
-      expect(responseJson.data.thread.body).toEqual(addThreadPayload.body);
-      expect(responseJson.data.thread.username).toEqual(addUserPayload.username);
-      expect(Array.isArray(responseJson.data.thread.comments)).toBe(true);
-      expect(responseJson.data.thread.comments[0].content).toEqual(addCommentPayload.content);
+
+      const thread = responseJson.data.thread;
+      expect(thread).toBeDefined();
+      expect(thread.id).toEqual(addedThread.id);
+      expect(thread.title).toEqual(addThreadPayload.title);
+      expect(thread.body).toEqual(addThreadPayload.body);
+      expect(thread.username).toEqual(addUserPayload.username);
+
+      expect(Array.isArray(thread.comments)).toBe(true);
+      expect(thread.comments).toHaveLength(1);
+
+      const comment = thread.comments[0];
+      expect(comment.content).toEqual(addCommentPayload.content);
+      expect(comment.username).toEqual(addUserPayload.username);
+
+      expect(Array.isArray(comment.replies)).toBe(true);
+      expect(comment.replies).toHaveLength(1);
+
+      const reply = comment.replies[0];
+      expect(reply.content).toEqual(addReplyPayload.content);
+      expect(reply.username).toEqual(addUserPayload.username);
 
     });
 

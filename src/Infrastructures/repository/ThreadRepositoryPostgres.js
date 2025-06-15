@@ -31,6 +31,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
   }
 
   async getThread(threadId) {
+
     const query = {
       text: `
         SELECT 
@@ -44,12 +45,21 @@ class ThreadRepositoryPostgres extends ThreadRepository {
           c.content AS comment_content,
           c.date AS comment_date,
           cu.username AS comment_owner_username,
-          c.is_deleted as comment_is_deleted
+          c.is_deleted as comment_is_deleted,
+
+          r.id AS reply_id,
+          r.content AS reply_content,
+          r.date AS reply_date,
+          r.comment_id AS reply_comment_id,
+          r.is_deleted AS reply_is_deleted,
+          ru.username AS reply_owner_username
 
         FROM threads AS t
-        INNER JOIN users AS tu ON t.owner = tu.id
-        INNER JOIN comments AS c ON t.id = c.thread_id
-        INNER JOIN users AS cu ON c.owner = cu.id
+        LEFT JOIN users AS tu ON t.owner = tu.id
+        LEFT JOIN comments AS c ON t.id = c.thread_id
+        LEFT JOIN users AS cu ON c.owner = cu.id
+        LEFT JOIN replies AS r ON c.id = r.comment_id
+        LEFT JOIN users AS ru ON r.owner = ru.id
 
         WHERE t.id = $1
       `,
@@ -62,21 +72,46 @@ class ThreadRepositoryPostgres extends ThreadRepository {
       throw new NotFoundError("thread tidak ditemukan");
     }
 
-    const comments = result.rows.map((comment) => ({
-      id: comment.comment_id,
-      username: comment.comment_owner_username,
-      date: comment.comment_date,
-      content: comment.comment_is_deleted ? '**komentar telah dihapus**' : comment.comment_content
-    }))
+    const commentMap = new Map();
+
+    for (const row of result.rows) {
+
+      if (row.comment_id && !commentMap.has(row.comment_id)) {
+        commentMap.set(row.comment_id, {
+          id: row.comment_id,
+          username: row.comment_owner_username,
+          date: row.comment_date,
+          content: row.comment_is_deleted ? '**komentar telah dihapus**' : row.comment_content,
+          replies: [],
+        });
+      }
+
+      if (row.reply_id && row.comment_id) {
+        const reply = {
+          id: row.reply_id,
+          username: row.reply_owner_username,
+          date: row.reply_date,
+          commentId: row.reply_comment_id,
+          content: row.reply_is_deleted ? '**balasan telah dihapus**' : row.reply_content,
+        };
+
+        commentMap.get(row.comment_id).replies.push(reply);
+      }
+    }
+
+    const comments = Array.from(commentMap.values()).map(comment => ({
+      ...comment,
+      replies: comment.replies.sort((a, b) => new Date(a.date) - new Date(b.date)),
+    }));
 
     const thread = {
-      id : result.rows[0].thread_id,
-      title : result.rows[0].title,
-      body : result.rows[0].body,
-      date : result.rows[0].thread_date,
-      username : result.rows[0].thread_owner_username,
-      comments: comments
-    }
+      id: result.rows[0].thread_id,
+      title: result.rows[0].title,
+      body: result.rows[0].body,
+      date: result.rows[0].thread_date,
+      username: result.rows[0].thread_owner_username,
+      comments,
+    };
 
     return thread;
   }

@@ -14,7 +14,7 @@ describe('CommentRepository interface', () => {
     const commentRepository = new CommentRepository();
 
     // Action and Assert
-    await expect(commentRepository.verifyCommentOwner('user-123', 'thread-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+    await expect(commentRepository.verifyCommentOwner('user-123', 'comment-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   });
 
   it('should throw error when invoke abstract behavior', async () => {
@@ -22,6 +22,14 @@ describe('CommentRepository interface', () => {
     const commentRepository = new CommentRepository();
 
     // Action and Assert
-    await expect(commentRepository.softDeleteCommentById('thread-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+    await expect(commentRepository.verifyAvailableComment('comment-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+  });
+
+  it('should throw error when invoke abstract behavior', async () => {
+    // Arrange
+    const commentRepository = new CommentRepository();
+
+    // Action and Assert
+    await expect(commentRepository.softDeleteCommentById('comment-123')).rejects.toThrow('COMMENT_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   });
 });

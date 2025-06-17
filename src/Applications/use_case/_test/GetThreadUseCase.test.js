@@ -4,20 +4,18 @@ const ThreadRepository = require('../../../Domains/threads/ThreadRepository');
 describe('GetThreadUseCase', () => {
   it('should throw error if use case payload not contain thread id', async () => {
     // Arrange
-    const useCasePayload = {};
+    // const useCasePayload = 'thread-123';
     const getThreadUseCase = new GetThreadUseCase({});
 
     // Action & Assert
-    await expect(getThreadUseCase.execute(useCasePayload))
+    await expect(getThreadUseCase.execute())
       .rejects
       .toThrowError('GET_THREAD_USE_CASE.NOT_CONTAIN_THREAD_ID');
   });
 
   it('should throw error if thread id not string', async () => {
     // Arrange
-    const useCasePayload = {
-      threadId: 123,
-    };
+    const useCasePayload = 123
     const getThreadUseCase = new GetThreadUseCase({});
 
     // Action & Assert
@@ -28,9 +26,7 @@ describe('GetThreadUseCase', () => {
 
   it('should orchestrating the get thread action correctly', async () => {
     // Arrange
-    const useCasePayload = {
-      threadId: 'thread-123',
-    };
+    const useCasePayload = 'thread-123';
 
     const mockPostgresRows = [
       {
@@ -89,9 +85,7 @@ describe('GetThreadUseCase', () => {
 
   it('should orchestrating the get thread action correctly with replies', async () => {
     // Arrange
-    const useCasePayload = {
-      threadId: 'thread-123',
-    };
+    const useCasePayload = 'thread-123';
 
     const mockPostgresRows = [
       {

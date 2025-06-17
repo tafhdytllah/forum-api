@@ -133,7 +133,10 @@ describe('ReplyRepositoryPostgres', () => {
 
       await expect(
         replyRepositoryPostgres.verifyReplyOwner(verifyReplyOwnerPayload.replyId, verifyReplyOwnerPayload.userId)
-      ).resolves.not.toThrow();
+      ).resolves.not.toThrow(NotFoundError);
+      await expect(
+        replyRepositoryPostgres.verifyReplyOwner(verifyReplyOwnerPayload.replyId, verifyReplyOwnerPayload.userId)
+      ).resolves.not.toThrow(AuthorizationError);
     });
   });
 

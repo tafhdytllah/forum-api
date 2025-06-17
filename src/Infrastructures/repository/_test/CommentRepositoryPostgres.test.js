@@ -129,7 +129,10 @@ describe('CommentRepositoryPostgres', () => {
 
       await expect(
         commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId)
-      ).resolves.not.toThrow();
+      ).resolves.not.toThrow(NotFoundError);
+      await expect(
+        commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId)
+      ).resolves.not.toThrow(AuthorizationError);
     });
   });
 
@@ -144,7 +147,7 @@ describe('CommentRepositoryPostgres', () => {
 
       await expect(commentRepositoryPostgres.verifyAvailableComment(commentIdNotFoundPayload))
         .rejects
-        .toThrowError(NotFoundError);
+        .toThrow(NotFoundError);
     });
 
     it('should not throw NotFoundError when comment is found', async () => {
@@ -170,7 +173,7 @@ describe('CommentRepositoryPostgres', () => {
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
       await expect(commentRepositoryPostgres.verifyAvailableComment(commentId))
-        .resolves.not.toThrowError(NotFoundError);
+        .resolves.not.toThrow(NotFoundError);
     });
   });
 

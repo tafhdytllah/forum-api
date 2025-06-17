@@ -1,6 +1,5 @@
 const pool = require('../../database/postgres/pool');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
-const AddComment = require('../../../Domains/comments/entities/AddComment');
 const LuxonDateTimeFormatter = require('../../date_time/LuxonDateTimeFormatter');
 const { DateTime } = require('luxon');
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
@@ -22,228 +21,187 @@ describe('CommentRepositoryPostgres', () => {
   });
 
   describe('addComment function', () => {
-    it('should throw InvariantError if comment not added', async () => {
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }), // Simulasi gagal insert
+    it('should throw InvariantError when addComment fails to insert data', async () => {
+      const addCommentPayload = {
+        content: 'a content',
+        threadId: 'thread-123',
+        userId: 'user-123',
       };
 
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      };
       const fakeIdGenerator = () => '123';
       const fakeDateTimeFormatter = {
         formatDateTime: () => '2025-01-01T00:00:00.000Z',
       };
-
+      
       const commentRepositoryPostgres = new CommentRepositoryPostgres(
         fakePool,
         fakeIdGenerator,
         fakeDateTimeFormatter
       );
 
-      const fakeCommentPayload = {
-        content: 'a comment',
-        threadId: 'thread-123',
-        owner: 'user-123',
-      };
-
-      await expect(commentRepositoryPostgres.addComment(fakeCommentPayload))
+      await expect(commentRepositoryPostgres.addComment(addCommentPayload))
         .rejects.toThrow(InvariantError);
     });
 
-    it('should persist add comment and return add comment correctly', async () => {
+    it('should persist add comment and return added comment', async () => {
 
-      await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      });
+      await UsersTableTestHelper.addUser({ id: 'user-123' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
 
-      await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Sebuah thread',
-        body: 'Isi dari thread',
-        owner: 'user-123',
-      });
-
-      const addComment = new AddComment({
-        content: 'ini comment',
+      const addCommentPayload = {
+        content: 'a content',
         threadId: 'thread-123',
-        owner: 'user-123',
-      });
+        userId: 'user-123',
+      };
 
-      const fakeIdGenerator = () => '123'; // stub!
+      const fakeIdGenerator = () => '123';
       const dateTimeFormatter = new LuxonDateTimeFormatter(DateTime);
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, fakeIdGenerator, dateTimeFormatter);
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(
+        pool,
+        fakeIdGenerator,
+        dateTimeFormatter
+      );
 
-      await commentRepositoryPostgres.addComment(addComment);
+      const addComment = await commentRepositoryPostgres.addComment(addCommentPayload);
+      const comment = await CommentsTableTestHelper.findCommentsById('comment-123');
 
-      const comments = await CommentsTableTestHelper.findCommentsById('comment-123');
-
-      expect(comments).toHaveLength(1);
+      expect(comment).toHaveLength(1);
+      expect(addComment).toStrictEqual({
+        id: 'comment-123',
+        content: addCommentPayload.content,
+        owner: addCommentPayload.userId,
+      });
     });
   });
 
   describe('verifyCommentOwner function', () => {
-    it('should throw InvariantError if comment not available', async () => {
-      // Arrange
-      await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      });
+    it('should throw NotFoundError if comment not available', async () => {
+      const verifyCommentOwnerPayload = {
+        commentId: 'comment-123',
+        userId: 'user-123',
+      };
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      };
 
-      // Act & Assert
-      await expect(
-        commentRepositoryPostgres.verifyCommentOwner('comment-not-found', 'user-123')
-      ).rejects.toThrow(NotFoundError);
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
+
+      await expect(commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId))
+        .rejects
+        .toThrow(NotFoundError);
     });
 
     it('should throw AuthorizationError if comment not owned by user', async () => {
-      // Arrange
-      await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      });
+      const verifyCommentOwnerPayload = {
+        commentId: 'comment-123',
+        userId: 'user-123',
+      };
 
-      await UsersTableTestHelper.addUser({
-        id: 'user-456',
-        username: 'john',
-        password: 'secret_password',
-        fullname: 'John Doe',
-      });
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({
+          rowCount: 1,
+          rows: [{ owner: 'user-403' }] // owner yang berbeda 
+        }),
+      };
 
-      await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Sebuah thread',
-        body: 'Isi dari thread',
-        owner: 'user-123',
-      });
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
 
-      await CommentsTableTestHelper.addComment({
-        id: 'comment-123',
-        content: 'ini comment',
-        threadId: 'thread-123',
-        owner: 'user-123',
-      });
-
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
-
-      // Act & Assert
-      await expect(
-        commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-456')
-      ).rejects.toThrow(AuthorizationError);
+      await expect(commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId))
+        .rejects
+        .toThrow(AuthorizationError);
     });
 
     it('should not throw error if comment is owned by user', async () => {
-      // Arrange
-      await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      });
+      const verifyCommentOwnerPayload = {
+        commentId: 'comment-123',
+        userId: 'user-123',
+      };
 
-      await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Sebuah thread',
-        body: 'Isi dari thread',
-        owner: 'user-123',
-      });
-
-      await CommentsTableTestHelper.addComment({
-        id: 'comment-123',
-        content: 'ini comment',
-        threadId: 'thread-123',
-        owner: 'user-123',
-      });
+      await UsersTableTestHelper.addUser({ id: 'user-123' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-123', threadId: 'thread-123', owner: 'user-123' });
 
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
-      // Act & Assert
       await expect(
-        commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-123')
+        commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId)
       ).resolves.not.toThrow();
     });
   });
 
   describe('verifyAvailableComment function', () => {
-    it('should throw InvariantError if comment not found', async () => {
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+    it('should throw NotFoundError when comment is not found', async () => {
+      const commentIdNotFoundPayload = 'comment-404';
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      };
 
-      await expect(commentRepositoryPostgres.verifyAvailableComment('comment-123'))
-        .rejects.toThrow(NotFoundError);
-    })
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
 
-    it('should not throw error if comment is found', async () => {
+      await expect(commentRepositoryPostgres.verifyAvailableComment(commentIdNotFoundPayload))
+        .rejects
+        .toThrowError(NotFoundError);
+    });
+
+    it('should not throw NotFoundError when comment is found', async () => {
+      const userId = 'user-123';
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+
       await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      })
+        id: userId
+      });
 
       await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Sebuah thread',
-        body: 'Isi dari thread',
-        owner: 'user-123',
+        id: threadId,
+        owner: userId,
       });
 
       await CommentsTableTestHelper.addComment({
-        id: 'comment-123',
-        content: 'ini comment',
-        threadId: 'thread-123',
-        owner: 'user-123',
+        id: commentId,
+        threadId: threadId,
+        owner: userId,
       });
 
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
-      await expect(commentRepositoryPostgres.verifyAvailableComment('comment-123'))
-        .resolves.not.toThrow();
-    })
+      await expect(commentRepositoryPostgres.verifyAvailableComment(commentId))
+        .resolves.not.toThrowError(NotFoundError);
+    });
   });
 
   describe('softDeleteCommentById function', () => {
-    it('should throw InvariantError if comment not found', async () => {
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
+    it('should throw InvariantError if comment fails to soft delete', async () => {
+      const softDeleteCommentByIdPayload = 'comment-123';
 
-      await expect(commentRepositoryPostgres.softDeleteCommentById('comment-123'))
-        .rejects.toThrow(InvariantError);
+      const fakePool = {
+        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
+      };
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
+
+      await expect(commentRepositoryPostgres.softDeleteCommentById(softDeleteCommentByIdPayload))
+        .rejects
+        .toThrow(InvariantError);
     });
 
-    it('should soft delete comment correctly', async () => {
-      await UsersTableTestHelper.addUser({
-        id: 'user-123',
-        username: 'dicoding',
-        password: 'secret_password',
-        fullname: 'Dicoding Indonesia',
-      })
-
-      await ThreadsTableTestHelper.addThread({
-        id: 'thread-123',
-        title: 'Sebuah thread',
-        body: 'Isi dari thread',
-        owner: 'user-123',
-      });
-
-      await CommentsTableTestHelper.addComment({
-        id: 'comment-123',
-        content: 'ini comment',
-        threadId: 'thread-123',
-        owner: 'user-123',
-      });
+    it('should soft delete comment correctly and return id of deleted comment', async () => {
+      const commentIdToDelete = 'comment-123';
+      await UsersTableTestHelper.addUser({ id: 'user-123' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-123', threadId: 'thread-123', owner: 'user-123' });
 
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
-      await commentRepositoryPostgres.softDeleteCommentById('comment-123');
+      const deletedCommentId = await commentRepositoryPostgres.softDeleteCommentById(commentIdToDelete);
+      const comment = await CommentsTableTestHelper.findCommentsById(commentIdToDelete);
 
-      const comments = await CommentsTableTestHelper.findCommentsById('comment-123');
-      expect(comments).toHaveLength(1);
-      expect(comments[0].is_deleted).toBe(true);
+      expect(comment).toHaveLength(1);
+      expect(comment[0].is_deleted).toBe(true);
+      expect(deletedCommentId).toStrictEqual(commentIdToDelete);
     });
   })
 });

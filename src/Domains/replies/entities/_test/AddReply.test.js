@@ -6,7 +6,8 @@ describe('a AddReply entities', () => {
     const payload = {
       content: 'ini reply',
       commentId: 'comment-123',
-      // owner missing
+      // userId missing
+      // threadId missing
     };
 
     // Action & Assert
@@ -18,7 +19,8 @@ describe('a AddReply entities', () => {
     const payload = {
       content: 123,
       commentId: {},
-      owner: [],
+      userId: [],
+      threadId: {},
     };
 
     // Action & Assert
@@ -30,7 +32,8 @@ describe('a AddReply entities', () => {
     const payload = {
       content: 'Sebuah reply',
       commentId: 'comment-123',
-      owner: 'user-123',
+      userId: 'user-123',
+      threadId: 'thread-123',
     };
 
     // Action
@@ -38,5 +41,8 @@ describe('a AddReply entities', () => {
 
     // Assert
     expect(addReply.content).toEqual(payload.content);
+    expect(addReply.commentId).toEqual(payload.commentId);
+    expect(addReply.userId).toEqual(payload.userId);
+    expect(addReply.threadId).toEqual(payload.threadId);
   });
 });

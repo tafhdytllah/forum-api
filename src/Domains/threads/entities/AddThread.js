@@ -2,20 +2,20 @@ class AddThread {
   constructor(payload) {
     this._verifyPayload(payload);
 
-    const { title, body, owner } = payload;
+    const { title, body, userId } = payload;
 
     this.title = title;
     this.body = body;
-    this.owner = owner;
+    this.userId = userId;
   }
 
-  _verifyPayload({ title, body, owner }) {
+  _verifyPayload({ title, body, userId }) {
 
-    if (!title || !body || !owner) {
+    if (!title || !body || !userId) {
       throw new Error('NEW_THREAD.NOT_CONTAIN_NEEDED_PROPERTY');
     }
 
-    if (typeof title !== 'string' || typeof body !== 'string' || typeof owner !== 'string') {
+    if (typeof title !== 'string' || typeof body !== 'string' || typeof userId !== 'string') {
       throw new Error('NEW_THREAD.NOT_MEET_DATA_TYPE_SPECIFICATION');
     }
   }

@@ -1,5 +1,4 @@
 const ReplyRepository = require('../../Domains/replies/ReplyRepository');
-const AddedReply = require('../../Domains/replies/entities/AddedReply');
 const InvariantError = require('../../Commons/exceptions/InvariantError');
 const NotFoundError = require('../../Commons/exceptions/NotFoundError');
 const AuthorizationError = require('../../Commons/exceptions/AuthorizationError');
@@ -12,13 +11,13 @@ class ReplyRepositoryPostgres extends ReplyRepository {
     this._dateTimeFormatter = dateTimeFormatter;
   }
 
-  async addReply({ content, commentId, owner }) {
+  async addReply({ content, commentId, userId }) {
     const id = `reply-${this._idGenerator()}`;
     const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
 
     const query = {
       text: 'INSERT INTO replies(id, content, comment_id, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5) RETURNING id, content, owner',
-      values: [id, content, commentId, owner, createdAt],
+      values: [id, content, commentId, userId, createdAt],
     };
 
     const result = await this._pool.query(query);
@@ -27,10 +26,10 @@ class ReplyRepositoryPostgres extends ReplyRepository {
       throw new InvariantError('reply gagal ditambahkan');
     }
 
-    return new AddedReply({ ...result.rows[0] });
+    return result.rows[0];
   }
 
-  async verifyReplyOwner(replyId, owner) {
+  async verifyReplyOwner(replyId, userId) {
     const query = {
       text: 'SELECT * FROM replies WHERE id = $1',
       values: [replyId],
@@ -43,7 +42,7 @@ class ReplyRepositoryPostgres extends ReplyRepository {
     }
 
     const reply = result.rows[0];
-    if (reply.owner !== owner) {
+    if (reply.owner !== userId) {
       throw new AuthorizationError('anda tidak berhak mengakses reply ini');
     }
   }

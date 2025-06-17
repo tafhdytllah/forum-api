@@ -6,7 +6,7 @@ describe('a AddThread entities', () => {
     const payload = {
       // title: 'Sebuah judul',
       body: 'Ini adalah isi dari sebuah thread',
-      owner: 'user-123',
+      userId: 'user-123',
     };
 
     // Action & Assert
@@ -18,7 +18,7 @@ describe('a AddThread entities', () => {
     const payload = {
       title: 123,
       body: true,
-      owner: {},
+      userId: {},
     };
 
     // Action & Assert
@@ -30,7 +30,7 @@ describe('a AddThread entities', () => {
     const payload = {
       title: 'Judul Diskusi',
       body: 'Ini adalah isi dari thread diskusi.',
-      owner: 'user-123',
+      userId: 'user-123',
     };
 
     // Action
@@ -39,5 +39,6 @@ describe('a AddThread entities', () => {
     // Assert
     expect(thread.title).toEqual(payload.title);
     expect(thread.body).toEqual(payload.body);
+    expect(thread.userId).toEqual(payload.userId);
   });
 });

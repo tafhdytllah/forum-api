@@ -1,17 +1,22 @@
+const DeleteComment = require('../../Domains/comments/entities/DeleteComment');
+const DeletedComment = require('../../Domains/comments/entities/DeletedComment');
+
 class DeleteCommentUseCase {
   constructor({ threadRepository, commentRepository }) {
     this._threadRepository = threadRepository;
     this._commentRepository = commentRepository;
   }
 
-  async execute({ threadId, commentId, owner }) {
-    await this._threadRepository.verifyAvailableThread(threadId);
+  async execute({ threadId, commentId, userId }) {
+    const deleteComment = new DeleteComment({ threadId, commentId, userId });
 
-    await this._commentRepository.verifyCommentOwner(commentId, owner);
+    await this._threadRepository.verifyAvailableThread(deleteComment.threadId);
 
-    const deletedCommentId = await this._commentRepository.softDeleteCommentById(commentId);
+    await this._commentRepository.verifyCommentOwner(deleteComment.commentId, deleteComment.userId);
 
-    return deletedCommentId;
+    const deletedCommentId = await this._commentRepository.softDeleteCommentById(deleteComment.commentId);
+
+    return new DeletedComment(deletedCommentId);
   }
 }
 

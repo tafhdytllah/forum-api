@@ -12,7 +12,7 @@ class AddedThread {
 
   _verifyPayload({ id, title, owner }) {
 
-    if (!id || !title, !owner) {
+    if (!id || !title || !owner) {
       throw new Error('NEW_THREAD.NOT_CONTAIN_NEEDED_PROPERTY');
     }
 

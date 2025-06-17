@@ -4,52 +4,45 @@ const AddThreadUseCase = require('../AddThreadUseCase');
 const AddThread = require('../../../Domains/threads/entities/AddThread');
 
 describe('AddThreadUseCase', () => {
-  /**
-   * Menguji apakah use case mampu mengoskestrasikan langkah demi langkah dengan benar.
-   */
-  it('should orchestrating the add user action correctly', async () => {
-    // Arrange
+
+  it('should orchestrating the add thread action correctly', async () => {
+
     const useCasePayload = {
-      auth: {
-        credentials: {
-          id: 'user-123',
-        },
-      },
-      payload: {
-        title: 'ini title',
-        body: 'ini body',
-        owner: 'user-123',
-      },
+      title: 'ini title',
+      body: 'ini body',
+      userId: 'user-123',
     };
 
-    const mockAddedThread = new AddedThread({
-      id: 'thread-123',
-      title: useCasePayload.payload.title,
-      owner: useCasePayload.payload.owner,
+    const addThreadPayload = new AddThread({
+      title: 'ini title',
+      body: 'ini body',
+      userId: 'user-123',
     });
 
-    /** creating dependency of use case */
+    const mockAddThreadResult = {
+      id: 'thread-123',
+      title: 'ini title',
+      owner: 'user-123',
+    };
+
+    const expectedResult = new AddedThread({
+      id: 'thread-123',
+      title: 'ini title',
+      owner: 'user-123',
+    });
+
     const mockThreadRepository = new ThreadRepository();
 
-    /** mocking needed function */
     mockThreadRepository.addThread = jest.fn()
-      .mockImplementation(() => Promise.resolve(mockAddedThread));
+      .mockImplementation(() => Promise.resolve(mockAddThreadResult));
 
-    /** creating use case instance */
     const getThreadUseCase = new AddThreadUseCase({
       threadRepository: mockThreadRepository,
     });
 
-    // Action
-    const addedThread = await getThreadUseCase.execute(useCasePayload);
+    const result = await getThreadUseCase.execute(useCasePayload);
 
-    // Assert
-    expect(addedThread).toStrictEqual(mockAddedThread);
-
-    expect(mockThreadRepository.addThread).toBeCalledWith(new AddThread({
-      title: useCasePayload.payload.title,
-      body: useCasePayload.payload.body,
-      owner: useCasePayload.payload.owner,
-    }));
+    expect(mockThreadRepository.addThread).toBeCalledWith(addThreadPayload);
+    expect(result).toStrictEqual(expectedResult);
   });
 });

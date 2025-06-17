@@ -5,18 +5,15 @@ class GetThreadUseCase {
     this._threadRepository = threadRepository;
   }
 
-  async execute(useCasePayload) {
-    this._validatePayload(useCasePayload);
-
-    const { threadId } = useCasePayload;
+  async execute(threadId) {
+    this._validatePayload(threadId);
 
     const threadRaw = await this._threadRepository.getThread(threadId);
 
     return mapToThreadDetail(threadRaw);
   }
 
-  _validatePayload(payload) {
-    const { threadId } = payload;
+  _validatePayload(threadId) {
     if (!threadId) {
       throw new Error('GET_THREAD_USE_CASE.NOT_CONTAIN_THREAD_ID');
     }

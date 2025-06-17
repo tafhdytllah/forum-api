@@ -1,5 +1,4 @@
 const InvariantError = require('../../Commons/exceptions/InvariantError');
-const AddedComment = require('../../Domains/comments/entities/AddedComment');
 const CommentRepository = require('../../Domains/comments/CommentRepository');
 const AuthorizationError = require('../../Commons/exceptions/AuthorizationError');
 const NotFoundError = require('../../Commons/exceptions/NotFoundError');
@@ -12,13 +11,13 @@ class CommentRepositoryPostgres extends CommentRepository {
     this._dateTimeFormatter = dateTimeFormatter;
   }
 
-  async addComment({ content, threadId, owner }) {
+  async addComment({ content, threadId, userId }) {
     const id = `comment-${this._idGenerator()}`;
     const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
 
     const query = {
       text: 'INSERT INTO comments(id, content, thread_id, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5) RETURNING id, content, owner',
-      values: [id, content, threadId, owner, createdAt],
+      values: [id, content, threadId, userId, createdAt],
     };
 
     const result = await this._pool.query(query);
@@ -27,10 +26,10 @@ class CommentRepositoryPostgres extends CommentRepository {
       throw new InvariantError('comment gagal ditambahkan');
     }
 
-    return new AddedComment({ ...result.rows[0] });
+    return result.rows[0];
   }
 
-  async verifyCommentOwner(commentId, owner) {
+  async verifyCommentOwner(commentId, userId) {
     const query = {
       text: 'SELECT * FROM comments WHERE id = $1',
       values: [commentId],
@@ -43,7 +42,7 @@ class CommentRepositoryPostgres extends CommentRepository {
     }
 
     const comment = result.rows[0];
-    if (comment.owner !== owner) {
+    if (comment.owner !== userId) {
       throw new AuthorizationError('anda tidak berhak mengakses comment ini');
     }
   }

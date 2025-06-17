@@ -126,7 +126,7 @@ describe('AddReplyUseCase', () => {
     expect(mockReplyRepository.addReply).toHaveBeenCalledWith({
       content: addReplyPayload.content,
       commentId: addReplyPayload.commentId,
-      owner: addReplyPayload.userId,
+      userId: addReplyPayload.userId,
     });
 
     expect(result).toStrictEqual(expectedAddedReply);

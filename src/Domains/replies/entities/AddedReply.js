@@ -12,7 +12,7 @@ class AddedReply {
 
   _verifyPayload({ id, content, owner }) {
 
-    if (!id || !content, !owner) {
+    if (!id || !content || !owner) {
       throw new Error('NEW_REPLY.NOT_CONTAIN_NEEDED_PROPERTY');
     }
 

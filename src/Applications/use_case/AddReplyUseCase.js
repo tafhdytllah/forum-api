@@ -19,7 +19,7 @@ class AddReplyUseCase {
     const addedReply = await this._replyRepository.addReply({
       content: addReply.content,
       commentId: addReply.commentId,
-      owner: addReply.userId,
+      userId: addReply.userId,
     });
 
     return new AddedReply(addedReply);

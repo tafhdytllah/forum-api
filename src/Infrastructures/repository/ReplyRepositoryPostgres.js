@@ -12,21 +12,21 @@ class ReplyRepositoryPostgres extends ReplyRepository {
   }
 
   async addReply({ content, commentId, userId }) {
-    const id = `reply-${this._idGenerator()}`;
-    const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
+    try {
+      const id = `reply-${this._idGenerator()}`;
+      const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
 
-    const query = {
-      text: 'INSERT INTO replies(id, content, comment_id, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5) RETURNING id, content, owner',
-      values: [id, content, commentId, userId, createdAt],
-    };
+      const query = {
+        text: 'INSERT INTO replies(id, content, comment_id, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5) RETURNING id, content, owner',
+        values: [id, content, commentId, userId, createdAt],
+      };
 
-    const result = await this._pool.query(query);
+      const result = await this._pool.query(query);
 
-    if (!result.rowCount) {
+      return result.rows[0];
+    } catch (error) {
       throw new InvariantError('reply gagal ditambahkan');
     }
-
-    return result.rows[0];
   }
 
   async verifyReplyOwner(replyId, userId) {

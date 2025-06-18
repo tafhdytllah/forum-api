@@ -5,7 +5,7 @@ const UsersTableTestHelper = {
   async addUser({
     id = 'user-123', username = 'dicoding', password = 'secret', fullname = 'Dicoding Indonesia'
   }) {
-    const createdAt = new Date('2024-01-01T00:00:00+07:00');
+    const createdAt = '2025-05-15T22:00:00+07:00';
     const query = {
       text: 'INSERT INTO users(id, username, password, fullname, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5)',
       values: [id, username, password, fullname, createdAt],

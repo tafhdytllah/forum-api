@@ -22,22 +22,20 @@ describe('CommentRepositoryPostgres', () => {
 
   describe('addComment function', () => {
     it('should throw InvariantError when addComment fails to insert data', async () => {
+
       const addCommentPayload = {
         content: 'a content',
-        threadId: 'thread-123',
-        userId: 'user-123',
+        threadId: 'thread-22222',
+        userId: 'user-3333333',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
       const fakeIdGenerator = () => '123';
       const fakeDateTimeFormatter = {
-        formatDateTime: () => '2025-01-01T00:00:00.000Z',
+        formatDateTime: () => '2025-05-15T22:00:00+07:00',
       };
-      
+
       const commentRepositoryPostgres = new CommentRepositoryPostgres(
-        fakePool,
+        pool,
         fakeIdGenerator,
         fakeDateTimeFormatter
       );
@@ -79,16 +77,13 @@ describe('CommentRepositoryPostgres', () => {
 
   describe('verifyCommentOwner function', () => {
     it('should throw NotFoundError if comment not available', async () => {
+
       const verifyCommentOwnerPayload = {
         commentId: 'comment-123',
         userId: 'user-123',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
-
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
       await expect(commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId))
         .rejects
@@ -96,19 +91,18 @@ describe('CommentRepositoryPostgres', () => {
     });
 
     it('should throw AuthorizationError if comment not owned by user', async () => {
+      await UsersTableTestHelper.addUser({ id: 'user-1', username: 'dicoding' });
+      await UsersTableTestHelper.addUser({ id: 'user-2', username: 'dicoding2' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-1', owner: 'user-1' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-1', owner: 'user-2' });
+
+      // verify comment dengan user yang tidak sama
       const verifyCommentOwnerPayload = {
-        commentId: 'comment-123',
-        userId: 'user-123',
+        commentId: 'comment-1',
+        userId: 'user-1',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({
-          rowCount: 1,
-          rows: [{ owner: 'user-403' }] // owner yang berbeda 
-        }),
-      };
-
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
       await expect(commentRepositoryPostgres.verifyCommentOwner(verifyCommentOwnerPayload.commentId, verifyCommentOwnerPayload.userId))
         .rejects
@@ -139,11 +133,8 @@ describe('CommentRepositoryPostgres', () => {
   describe('verifyAvailableComment function', () => {
     it('should throw NotFoundError when comment is not found', async () => {
       const commentIdNotFoundPayload = 'comment-404';
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
 
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
       await expect(commentRepositoryPostgres.verifyAvailableComment(commentIdNotFoundPayload))
         .rejects
@@ -179,12 +170,9 @@ describe('CommentRepositoryPostgres', () => {
 
   describe('softDeleteCommentById function', () => {
     it('should throw InvariantError if comment fails to soft delete', async () => {
-      const softDeleteCommentByIdPayload = 'comment-123';
+      const softDeleteCommentByIdPayload = 'comment-404';
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
-      const commentRepositoryPostgres = new CommentRepositoryPostgres(fakePool, {}, {});
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {}, {});
 
       await expect(commentRepositoryPostgres.softDeleteCommentById(softDeleteCommentByIdPayload))
         .rejects

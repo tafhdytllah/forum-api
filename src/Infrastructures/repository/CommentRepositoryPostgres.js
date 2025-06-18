@@ -12,21 +12,21 @@ class CommentRepositoryPostgres extends CommentRepository {
   }
 
   async addComment({ content, threadId, userId }) {
-    const id = `comment-${this._idGenerator()}`;
-    const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
+    try {
+      const id = `comment-${this._idGenerator()}`;
+      const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
 
-    const query = {
-      text: 'INSERT INTO comments(id, content, thread_id, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5) RETURNING id, content, owner',
-      values: [id, content, threadId, userId, createdAt],
-    };
+      const query = {
+        text: 'INSERT INTO comments(id, content, thread_id, owner, date, created_at, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5) RETURNING id, content, owner',
+        values: [id, content, threadId, userId, createdAt],
+      };
 
-    const result = await this._pool.query(query);
+      const result = await this._pool.query(query);
 
-    if (!result.rowCount) {
+      return result.rows[0];
+    } catch (error) {
       throw new InvariantError('comment gagal ditambahkan');
     }
-
-    return result.rows[0];
   }
 
   async verifyCommentOwner(commentId, userId) {
@@ -50,7 +50,7 @@ class CommentRepositoryPostgres extends CommentRepository {
   async verifyAvailableComment(commentId) {
 
     const query = {
-      text: 'SELECT * FROM comments WHERE id = $1',
+      text: 'SELECT * FROM comments WHERE id = $1 LIMIT 1',
       values: [commentId],
     };
 

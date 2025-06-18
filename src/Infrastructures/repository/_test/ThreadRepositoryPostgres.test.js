@@ -11,9 +11,10 @@ const InvariantError = require('../../../Commons/exceptions/InvariantError');
 
 describe('ThreadRepositoryPostgres', () => {
   afterEach(async () => {
-    await CommentsTableTestHelper.cleanTable();
     await ThreadsTableTestHelper.cleanTable();
     await UsersTableTestHelper.cleanTable();
+    await CommentsTableTestHelper.cleanTable();
+    await RepliesTableTestHelper.cleanTable();
   });
 
   afterAll(async () => {
@@ -28,16 +29,13 @@ describe('ThreadRepositoryPostgres', () => {
         userId: 'user-123',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
       const fakeIdGenerator = () => '123';
       const fakeDateTimeFormatter = {
-        formatDateTime: () => '2024-06-14T00:00:00.000Z',
+        formatDateTime: () => '2025-05-15T22:00:00+07:00',
       };
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(
-        fakePool,
+        pool,
         fakeIdGenerator,
         fakeDateTimeFormatter
       );
@@ -79,22 +77,11 @@ describe('ThreadRepositoryPostgres', () => {
   });
 
   describe('getThread function', () => {
-    afterEach(async () => {
-      await ThreadsTableTestHelper.cleanTable();
-      await UsersTableTestHelper.cleanTable();
-      await CommentsTableTestHelper.cleanTable();
-      await RepliesTableTestHelper.cleanTable();
-      jest.restoreAllMocks();
-    });
 
     it('should throw NotFoundError if thread not available', async () => {
       const getThreadPayloadNotFound = 'thread-404';
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
-
-      const threadRepositoryPostgres = new ThreadRepositoryPostgres(fakePool, {}, {});
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
       await expect(threadRepositoryPostgres.getThread(getThreadPayloadNotFound))
         .rejects
@@ -110,7 +97,7 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user123',
         commentId: null,
         commentContent: null,
@@ -127,7 +114,7 @@ describe('ThreadRepositoryPostgres', () => {
 
       await UsersTableTestHelper.addUser({ id: 'user-123', username: 'user123' });
 
-      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-123', date: '2024-06-17T01:01:00.000Z' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-123', date: '2025-05-15T22:00:00+07:00' });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
@@ -139,6 +126,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result.thread_id).toEqual(expectedResult.threadId);
       expect(result.title).toEqual(expectedResult.title);
       expect(result.body).toEqual(expectedResult.body);
+      expect(result.thread_date).toEqual(expectedResult.threadDate);
       expect(result.thread_owner_username).toEqual(expectedResult.threadOwnerUsername);
       expect(result.comment_id).toBeNull();
       expect(result.comment_content).toBeNull();
@@ -162,11 +150,11 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-1',
         commentContent: 'Sample Comment 1',
-        commentDate: '2024-06-17T11:11:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user222',
         commentIsDeleted: false,
         replyId: null,
@@ -180,11 +168,11 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-2',
         commentContent: 'Sample Comment 2',
-        commentDate: '2024-06-17T22:22:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user333',
         commentIsDeleted: false,
         replyId: null,
@@ -199,10 +187,10 @@ describe('ThreadRepositoryPostgres', () => {
       await UsersTableTestHelper.addUser({ id: 'user-222', username: 'user222' });
       await UsersTableTestHelper.addUser({ id: 'user-333', username: 'user333' });
 
-      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2024-06-17T01:01:00.000Z' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2025-05-15T22:00:00+07:00' });
 
-      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', date: '2024-06-17T11:11:00.00.000Z' });
-      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', date: '2024-06-17T22:22:00.00.000Z' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', date: '2025-05-15T22:00:00+07:00' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', date: '2025-05-15T22:00:00+07:00' });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
@@ -214,6 +202,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result.thread_id).toEqual(expectedResult[0].threadId);
       expect(result.title).toEqual(expectedResult[0].title);
       expect(result.body).toEqual(expectedResult[0].body);
+      expect(result.thread_date).toEqual(expectedResult[0].threadDate);
       expect(result.thread_owner_username).toEqual(expectedResult[0].threadOwnerUsername);
       expect(result.comment_id).toEqual(expectedResult[0].commentId);
       expect(result.comment_content).toEqual(expectedResult[0].commentContent);
@@ -231,6 +220,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result2.thread_id).toEqual(expectedResult[1].threadId);
       expect(result2.title).toEqual(expectedResult[1].title);
       expect(result2.body).toEqual(expectedResult[1].body);
+      expect(result2.thread_date).toEqual(expectedResult[1].threadDate);
       expect(result2.thread_owner_username).toEqual(expectedResult[1].threadOwnerUsername);
       expect(result2.comment_id).toEqual(expectedResult[1].commentId);
       expect(result2.comment_content).toEqual(expectedResult[1].commentContent);
@@ -254,11 +244,11 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-1',
         commentContent: 'Sample Comment 1',
-        commentDate: '2024-06-17T11:11:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user222',
         commentIsDeleted: true,
         replyId: null,
@@ -272,11 +262,11 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-2',
         commentContent: 'Sample Comment 2',
-        commentDate: '2024-06-17T22:22:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user333',
         commentIsDeleted: false,
         replyId: null,
@@ -291,10 +281,10 @@ describe('ThreadRepositoryPostgres', () => {
       await UsersTableTestHelper.addUser({ id: 'user-222', username: 'user222' });
       await UsersTableTestHelper.addUser({ id: 'user-333', username: 'user333' });
 
-      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2024-06-17T01:01:00.000Z' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2025-05-15T22:00:00+07:00' });
 
-      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', isDeleted: true, date: '2024-06-17T11:11:00.00.000Z' });
-      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', isDeleted: false, date: '2024-06-17T22:22:00.00.000Z' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', isDeleted: true, date: '2025-05-15T22:00:00+07:00' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
@@ -306,6 +296,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result.thread_id).toEqual(expectedResult[0].threadId);
       expect(result.title).toEqual(expectedResult[0].title);
       expect(result.body).toEqual(expectedResult[0].body);
+      expect(result.thread_date).toEqual(expectedResult[0].threadDate);
       expect(result.thread_owner_username).toEqual(expectedResult[0].threadOwnerUsername);
       expect(result.comment_id).toEqual(expectedResult[0].commentId);
       expect(result.comment_content).toEqual(expectedResult[0].commentContent);
@@ -323,6 +314,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result2.thread_id).toEqual(expectedResult[1].threadId);
       expect(result2.title).toEqual(expectedResult[1].title);
       expect(result2.body).toEqual(expectedResult[1].body);
+      expect(result2.thread_date).toEqual(expectedResult[1].threadDate);
       expect(result2.thread_owner_username).toEqual(expectedResult[1].threadOwnerUsername);
       expect(result2.comment_id).toEqual(expectedResult[1].commentId);
       expect(result2.comment_content).toEqual(expectedResult[1].commentContent);
@@ -347,16 +339,16 @@ describe('ThreadRepositoryPostgres', () => {
           threadId: 'thread-123',
           title: 'Sample Thread',
           body: 'Sample Body',
-          threadDate: '2024-06-17T01:01:00.00.000Z',
+          threadDate: '2025-05-15T22:00:00+07:00',
           threadOwnerUsername: 'user111',
           commentId: 'comment-1',
           commentContent: 'Sample Comment 1',
-          commentDate: '2024-06-17T11:11:00.00.000Z',
+          commentDate: '2025-05-15T22:00:00+07:00',
           commentOwnerUsername: 'user222',
           commentIsDeleted: false,
           replyId: 'reply-2',
           replyContent: 'Sample Reply 2',
-          replyDate: '2024-06-17T23:23:00.00.000Z',
+          replyDate: '2025-05-15T22:00:00+07:00',
           replyComment_id: 'comment-1',
           replyIsDeleted: false,
           replyOwnerUsername: 'user222',
@@ -365,16 +357,16 @@ describe('ThreadRepositoryPostgres', () => {
           threadId: 'thread-123',
           title: 'Sample Thread',
           body: 'Sample Body',
-          threadDate: '2024-06-17T01:01:00.00.000Z',
+          threadDate: '2025-05-15T22:00:00+07:00',
           threadOwnerUsername: 'user111',
           commentId: 'comment-1',
           commentContent: 'Sample Comment 1',
-          commentDate: '2024-06-17T11:11:00.00.000Z',
+          commentDate: '2025-05-15T22:00:00+07:00',
           commentOwnerUsername: 'user222',
           commentIsDeleted: false,
           replyId: 'reply-1',
           replyContent: 'Sample Reply 1',
-          replyDate: '2024-06-17T22:22:00.00.000Z',
+          replyDate: '2025-05-15T22:00:00+07:00',
           replyComment_id: 'comment-1',
           replyIsDeleted: false,
           replyOwnerUsername: 'user111',
@@ -383,11 +375,11 @@ describe('ThreadRepositoryPostgres', () => {
           threadId: 'thread-123',
           title: 'Sample Thread',
           body: 'Sample Body',
-          threadDate: '2024-06-17T01:01:00.00.000Z',
+          threadDate: '2025-05-15T22:00:00+07:00',
           threadOwnerUsername: 'user111',
           commentId: 'comment-2',
           commentContent: 'Sample Comment 2',
-          commentDate: '2024-06-17T10:10:00.00.000Z',
+          commentDate: '2025-05-15T22:00:00+07:00',
           commentOwnerUsername: 'user333',
           commentIsDeleted: false,
           replyId: null,
@@ -403,13 +395,13 @@ describe('ThreadRepositoryPostgres', () => {
       await UsersTableTestHelper.addUser({ id: 'user-222', username: 'user222' });
       await UsersTableTestHelper.addUser({ id: 'user-333', username: 'user333' });
 
-      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2024-06-17T01:01:00.00.000Z' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2025-05-15T22:00:00+07:00' });
 
-      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', isDeleted: false, date: '2024-06-17T11:11:00.00.000Z' });
-      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', isDeleted: false, date: '2024-06-17T10:10:00.00.000Z' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
 
-      await RepliesTableTestHelper.addReply({ id: 'reply-1', commentId: 'comment-1', content: 'Sample Reply 1', owner: 'user-111', isDeleted: false, date: '2024-06-17T22:22:00.00.000Z' });
-      await RepliesTableTestHelper.addReply({ id: 'reply-2', commentId: 'comment-1', content: 'Sample Reply 2', owner: 'user-222', isDeleted: false, date: '2024-06-17T23:23:00.00.000Z' });
+      await RepliesTableTestHelper.addReply({ id: 'reply-1', commentId: 'comment-1', content: 'Sample Reply 1', owner: 'user-111', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
+      await RepliesTableTestHelper.addReply({ id: 'reply-2', commentId: 'comment-1', content: 'Sample Reply 2', owner: 'user-222', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
@@ -421,6 +413,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result.thread_id).toEqual(expectedResult[0].threadId);
       expect(result.title).toEqual(expectedResult[0].title);
       expect(result.body).toEqual(expectedResult[0].body);
+      expect(result.thread_date).toEqual(expectedResult[0].threadDate);
       expect(result.thread_owner_username).toEqual(expectedResult[0].threadOwnerUsername);
       expect(result.comment_id).toEqual(expectedResult[0].commentId);
       expect(result.comment_content).toEqual(expectedResult[0].commentContent);
@@ -438,6 +431,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result2.thread_id).toEqual(expectedResult[1].threadId);
       expect(result2.title).toEqual(expectedResult[1].title);
       expect(result2.body).toEqual(expectedResult[1].body);
+      expect(result2.thread_date).toEqual(expectedResult[1].threadDate);
       expect(result2.thread_owner_username).toEqual(expectedResult[1].threadOwnerUsername);
       expect(result2.comment_id).toEqual(expectedResult[1].commentId);
       expect(result2.comment_content).toEqual(expectedResult[1].commentContent);
@@ -455,6 +449,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result3.thread_id).toEqual(expectedResult[2].threadId);
       expect(result3.title).toEqual(expectedResult[2].title);
       expect(result3.body).toEqual(expectedResult[2].body);
+      expect(result3.thread_date).toEqual(expectedResult[2].threadDate);
       expect(result3.thread_owner_username).toEqual(expectedResult[2].threadOwnerUsername);
       expect(result3.comment_id).toEqual(expectedResult[2].commentId);
       expect(result3.comment_content).toEqual(expectedResult[2].commentContent);
@@ -479,16 +474,16 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-1',
         commentContent: 'Sample Comment 1',
-        commentDate: '2024-06-17T11:11:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user222',
         commentIsDeleted: false,
         replyId: 'reply-2',
         replyContent: 'Sample Reply 2',
-        replyDate: '2024-06-17T23:23:00.00.000Z',
+        replyDate: '2025-05-15T22:00:00+07:00',
         replyComment_id: 'comment-1',
         replyIsDeleted: false,
         replyOwnerUsername: 'user222',
@@ -497,16 +492,16 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-1',
         commentContent: 'Sample Comment 1',
-        commentDate: '2024-06-17T11:11:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user222',
         commentIsDeleted: false,
         replyId: 'reply-1',
         replyContent: 'Sample Reply 1',
-        replyDate: '2024-06-17T22:22:00.00.000Z',
+        replyDate: '2025-05-15T22:00:00+07:00',
         replyComment_id: 'comment-1',
         replyIsDeleted: true,
         replyOwnerUsername: 'user111',
@@ -515,11 +510,11 @@ describe('ThreadRepositoryPostgres', () => {
         threadId: 'thread-123',
         title: 'Sample Thread',
         body: 'Sample Body',
-        threadDate: '2024-06-17T01:01:00.00.000Z',
+        threadDate: '2025-05-15T22:00:00+07:00',
         threadOwnerUsername: 'user111',
         commentId: 'comment-2',
         commentContent: 'Sample Comment 2',
-        commentDate: '2024-06-10T10:10:00.00.000Z',
+        commentDate: '2025-05-15T22:00:00+07:00',
         commentOwnerUsername: 'user333',
         commentIsDeleted: false,
         replyId: null,
@@ -534,13 +529,13 @@ describe('ThreadRepositoryPostgres', () => {
       await UsersTableTestHelper.addUser({ id: 'user-222', username: 'user222' });
       await UsersTableTestHelper.addUser({ id: 'user-333', username: 'user333' });
 
-      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2024-06-17T01:01:00.00.000Z' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2025-05-15T22:00:00+07:00' });
 
-      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', isDeleted: false, date: '2024-06-17T11:11:00.00.000Z' });
-      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', isDeleted: false, date: '2024-06-10T10:10:00.00.000Z' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
 
-      await RepliesTableTestHelper.addReply({ id: 'reply-1', commentId: 'comment-1', content: 'Sample Reply 1', owner: 'user-111', isDeleted: true, date: '2024-06-17T22:22:00.00.000Z' });
-      await RepliesTableTestHelper.addReply({ id: 'reply-2', commentId: 'comment-1', content: 'Sample Reply 2', owner: 'user-222', isDeleted: false, date: '2024-06-17T23:23:00.00.000Z' });
+      await RepliesTableTestHelper.addReply({ id: 'reply-1', commentId: 'comment-1', content: 'Sample Reply 1', owner: 'user-111', isDeleted: true, date: '2025-05-15T22:00:00+07:00' });
+      await RepliesTableTestHelper.addReply({ id: 'reply-2', commentId: 'comment-1', content: 'Sample Reply 2', owner: 'user-222', isDeleted: false, date: '2025-05-15T22:00:00+07:00' });
 
       const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
@@ -552,6 +547,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result.thread_id).toEqual(expectedResult[0].threadId);
       expect(result.title).toEqual(expectedResult[0].title);
       expect(result.body).toEqual(expectedResult[0].body);
+      expect(result.thread_date).toEqual(expectedResult[0].threadDate);
       expect(result.thread_owner_username).toEqual(expectedResult[0].threadOwnerUsername);
       expect(result.comment_id).toEqual(expectedResult[0].commentId);
       expect(result.comment_content).toEqual(expectedResult[0].commentContent);
@@ -569,6 +565,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result2.thread_id).toEqual(expectedResult[1].threadId);
       expect(result2.title).toEqual(expectedResult[1].title);
       expect(result2.body).toEqual(expectedResult[1].body);
+      expect(result2.thread_date).toEqual(expectedResult[1].threadDate);
       expect(result2.thread_owner_username).toEqual(expectedResult[1].threadOwnerUsername);
       expect(result2.comment_id).toEqual(expectedResult[1].commentId);
       expect(result2.comment_content).toEqual(expectedResult[1].commentContent);
@@ -586,6 +583,7 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result3.thread_id).toEqual(expectedResult[2].threadId);
       expect(result3.title).toEqual(expectedResult[2].title);
       expect(result3.body).toEqual(expectedResult[2].body);
+      expect(result3.thread_date).toEqual(expectedResult[2].threadDate);
       expect(result3.thread_owner_username).toEqual(expectedResult[2].threadOwnerUsername);
       expect(result3.comment_id).toEqual(expectedResult[2].commentId);
       expect(result3.comment_content).toEqual(expectedResult[2].commentContent);
@@ -605,11 +603,8 @@ describe('ThreadRepositoryPostgres', () => {
   describe('verifyAvailableThread function', () => {
     it('should throw NotFoundError when thread is not found', async () => {
       const threadIdNotFound = 'thread-404';
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
 
-      const threadRepositoryPostgres = new ThreadRepositoryPostgres(fakePool, {}, {});
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
 
       await expect(threadRepositoryPostgres.verifyAvailableThread(threadIdNotFound))
         .rejects

@@ -30,16 +30,13 @@ describe('ReplyRepositoryPostgres', () => {
         userId: 'user-123',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
       const fakeIdGenerator = () => '123';
       const fakeDateTimeFormatter = {
-        formatDateTime: () => '2025-01-01T00:00:00.000Z',
+        formatDateTime: () => '2025-05-15T22:00:00+07:00',
       };
 
       const replyRepositoryPostgres = new ReplyRepositoryPostgres(
-        fakePool,
+        pool,
         fakeIdGenerator,
         fakeDateTimeFormatter
       );
@@ -87,11 +84,7 @@ describe('ReplyRepositoryPostgres', () => {
         userId: 'user-123',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
-
-      const replyRepositoryPostgres = new ReplyRepositoryPostgres(fakePool, {}, {});
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
       await expect(replyRepositoryPostgres.verifyReplyOwner(verifyReplyOwnerPayload.replyId, verifyReplyOwnerPayload.userId))
         .rejects
@@ -99,19 +92,19 @@ describe('ReplyRepositoryPostgres', () => {
     });
 
     it('should throw AuthorizationError if reply not owned by user', async () => {
+
+      await UsersTableTestHelper.addUser({ id: 'user-1', username: 'dicoding' });
+      await UsersTableTestHelper.addUser({ id: 'user-2', username: 'dicoding2' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-1', owner: 'user-1' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-1', owner: 'user-2' });
+      await RepliesTableTestHelper.addReply({ id: 'reply-1', commentId: 'comment-1', owner: 'user-1' });
+
       const verifyReplyOwnerPayload = {
-        replyId: 'reply-123',
-        userId: 'user-123',
+        replyId: 'reply-1',
+        userId: 'user-12',
       };
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({
-          rowCount: 1,
-          rows: [{ owner: 'user-403' }] // owner yang berbeda 
-        }),
-      };
-
-      const replyRepositoryPostgres = new ReplyRepositoryPostgres(fakePool, {}, {});
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
       await expect(replyRepositoryPostgres.verifyReplyOwner(verifyReplyOwnerPayload.replyId, verifyReplyOwnerPayload.userId))
         .rejects
@@ -142,12 +135,9 @@ describe('ReplyRepositoryPostgres', () => {
 
   describe('softDeletReplyById', () => {
     it('should throw InvariantError if reply fails to soft delete', async () => {
-      const softDeleteReplyByIdPayload = 'reply-123';
+      const softDeleteReplyByIdPayload = 'reply-404';
 
-      const fakePool = {
-        query: jest.fn().mockResolvedValue({ rowCount: 0 }),
-      };
-      const replyRepositoryPostgres = new ReplyRepositoryPostgres(fakePool, {}, {});
+      const replyRepositoryPostgres = new ReplyRepositoryPostgres(pool, {}, {});
 
       await expect(replyRepositoryPostgres.softDeleteReplyById(softDeleteReplyByIdPayload))
         .rejects

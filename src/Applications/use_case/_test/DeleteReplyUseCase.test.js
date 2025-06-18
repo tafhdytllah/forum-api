@@ -1,7 +1,5 @@
 const ThreadRepository = require('../../../Domains/threads/ThreadRepository');
 const CommentRepository = require('../../../Domains/comments/CommentRepository');
-const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
-const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
 const ReplyRepository = require('../../../Domains/replies/ReplyRepository');
 const DeleteReplyUseCase = require('../DeleteReplyUseCase');
 const DeleteReply = require('../../../Domains/replies/entities/DeleteReply');
@@ -9,155 +7,33 @@ const DeletedReply = require('../../../Domains/replies/entities/DeletedReply');
 
 describe('DeleteReplyUseCase', () => {
 
-  it('should throw error if thread not found', async () => {
-    const useCasePayload = {
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
+  it('should throw error if payload not contain needed property', async () => {
+
+    const useCasePayload = { 
+      threadId: 'thread-123', 
+      // commentId: 'comment-123',
+      // replyId: 'reply-123', 
+      // userId: 'user-123',
     };
-
-    const deleteReplyPayload = new DeleteReply({
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
-    });
-
-    const mockThreadRepository = new ThreadRepository();
-    const mockCommentRepository = new CommentRepository();
-    const mockReplyRepository = new ReplyRepository();
-
-    mockThreadRepository.verifyAvailableThread = jest.fn()
-      .mockImplementation(() => { throw new NotFoundError('thread tidak ditemukan'); });
-
-    const deleteReplyUseCase = new DeleteReplyUseCase({
-      threadRepository: mockThreadRepository,
-      commentRepository: mockCommentRepository,
-      replyRepository: mockReplyRepository,
-    });
+    const deleteReplyUseCase = new DeleteReplyUseCase({}, {}, {});
 
     await expect(deleteReplyUseCase.execute(useCasePayload))
-      .rejects.toThrow(NotFoundError);
-    expect(mockThreadRepository.verifyAvailableThread)
-      .toHaveBeenCalledWith(deleteReplyPayload.threadId);
+      .rejects
+      .toThrowError('DELETE_REPLY.NOT_CONTAIN_NEEDED_PROPERTY');
   });
 
-  it('should throw error if comment not found', async () => {
-    const useCasePayload = {
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
+  it('should throw error if payload not meet data type specification', async () => {
+    const useCasePayload = { 
+      threadId: {}, 
+      commentId: 123,
+      replyId: ['reply-123'], 
+      userId: [],
     };
-
-    const deleteReplyPayload = new DeleteReply({
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
-    });
-
-    const mockThreadRepository = new ThreadRepository();
-    const mockCommentRepository = new CommentRepository();
-    const mockReplyRepository = new ReplyRepository();
-
-    mockThreadRepository.verifyAvailableThread = jest.fn().mockResolvedValue();
-    mockCommentRepository.verifyAvailableComment = jest.fn()
-      .mockImplementation(() => { throw new NotFoundError('comment tidak ditemukan'); });
-
-    const deleteReplyUseCase = new DeleteReplyUseCase({
-      threadRepository: mockThreadRepository,
-      commentRepository: mockCommentRepository,
-      replyRepository: mockReplyRepository,
-    });
+    const deleteReplyUseCase = new DeleteReplyUseCase({}, {}, {});
 
     await expect(deleteReplyUseCase.execute(useCasePayload))
-      .rejects.toThrow(NotFoundError);
-    expect(mockThreadRepository.verifyAvailableThread)
-      .toHaveBeenCalledWith(deleteReplyPayload.threadId);
-    expect(mockCommentRepository.verifyAvailableComment)
-      .toHaveBeenCalledWith(deleteReplyPayload.commentId);
-  });
-
-  it('should throw error if reply not found', async () => {
-    const useCasePayload = {
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
-    };
-
-    const deleteReplyPayload = new DeleteReply({
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
-    });
-
-    const mockThreadRepository = new ThreadRepository();
-    const mockCommentRepository = new CommentRepository();
-    const mockReplyRepository = new ReplyRepository();
-
-    mockThreadRepository.verifyAvailableThread = jest.fn().mockResolvedValue();
-    mockCommentRepository.verifyAvailableComment = jest.fn().mockResolvedValue();
-    mockReplyRepository.verifyReplyOwner = jest.fn()
-      .mockImplementation(() => { throw new NotFoundError('reply tidak ditemukan'); });
-
-    const deleteReplyUseCase = new DeleteReplyUseCase({
-      threadRepository: mockThreadRepository,
-      commentRepository: mockCommentRepository,
-      replyRepository: mockReplyRepository,
-    });
-
-    await expect(deleteReplyUseCase.execute(useCasePayload))
-      .rejects.toThrow(NotFoundError);
-    expect(mockThreadRepository.verifyAvailableThread)
-      .toHaveBeenCalledWith(deleteReplyPayload.threadId);
-    expect(mockCommentRepository.verifyAvailableComment)
-      .toHaveBeenCalledWith(deleteReplyPayload.commentId);
-    expect(mockReplyRepository.verifyReplyOwner)
-      .toHaveBeenCalledWith(deleteReplyPayload.replyId, deleteReplyPayload.userId);
-  });
-
-  it('should throw error if reply not owned by user', async () => {
-    const useCasePayload = {
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
-    };
-
-    const deleteReplyPayload = new DeleteReply({
-      threadId: 'thread-123',
-      commentId: 'comment-123',
-      replyId: 'reply-123',
-      userId: 'user-123',
-    });
-
-    const mockThreadRepository = new ThreadRepository();
-    const mockCommentRepository = new CommentRepository();
-    const mockReplyRepository = new ReplyRepository();
-
-    mockThreadRepository.verifyAvailableThread = jest.fn().mockResolvedValue();
-    mockCommentRepository.verifyAvailableComment = jest.fn().mockResolvedValue();
-    mockReplyRepository.verifyReplyOwner = jest.fn()
-      .mockImplementation(() => { throw new AuthorizationError('anda tidak berhak mengakses reply ini'); });
-
-    const deleteReplyUseCase = new DeleteReplyUseCase({
-      threadRepository: mockThreadRepository,
-      commentRepository: mockCommentRepository,
-      replyRepository: mockReplyRepository,
-    });
-
-    await expect(deleteReplyUseCase.execute(useCasePayload))
-      .rejects.toThrow(AuthorizationError);
-    expect(mockThreadRepository.verifyAvailableThread)
-      .toHaveBeenCalledWith(deleteReplyPayload.threadId);
-    expect(mockCommentRepository.verifyAvailableComment)
-      .toHaveBeenCalledWith(deleteReplyPayload.commentId);
-    expect(mockReplyRepository.verifyReplyOwner)
-      .toHaveBeenCalledWith(deleteReplyPayload.replyId, deleteReplyPayload.userId);
+      .rejects
+      .toThrowError('DELETE_REPLY.NOT_MEET_DATA_TYPE_SPECIFICATION');
   });
 
   it('should orchestrating the delete reply action correctly', async () => {

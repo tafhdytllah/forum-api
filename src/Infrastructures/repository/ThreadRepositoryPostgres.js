@@ -60,6 +60,7 @@ class ThreadRepositoryPostgres extends ThreadRepository {
         LEFT JOIN users AS ru ON r.owner = ru.id
 
         WHERE t.id = $1
+        ORDER BY r.id ASC
       `,
       values: [threadId],
     };

@@ -1,4 +1,4 @@
-const mapToThreadDetail = require('../helpers/mapToThreadDetail');
+const ThreadDetail = require('../../Domains/threads/entities/ThreadDetail');
 
 class GetThreadUseCase {
   constructor({ threadRepository }) {
@@ -8,9 +8,9 @@ class GetThreadUseCase {
   async execute(threadId) {
     this._validatePayload(threadId);
 
-    const threadRaw = await this._threadRepository.getThread(threadId);
+    const threadRows = await this._threadRepository.getThread(threadId);
 
-    return mapToThreadDetail(threadRaw);
+    return new ThreadDetail(threadRows);
   }
 
   _validatePayload(threadId) {

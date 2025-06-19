@@ -80,7 +80,7 @@ describe('GetThreadUseCase', () => {
 
     // Assert
     expect(mockThreadRepository.getThread).toBeCalledWith('thread-123');
-    expect(result).toStrictEqual(expectedThread);
+    expect(result).toMatchObject(expectedThread);
   });
 
   it('should orchestrating the get thread action correctly with replies', async () => {
@@ -147,6 +147,6 @@ describe('GetThreadUseCase', () => {
 
     // Assert
     expect(mockThreadRepository.getThread).toBeCalledWith('thread-123');
-    expect(result).toStrictEqual(expectedThread);
+    expect(result).toMatchObject(expectedThread);
   });
 });

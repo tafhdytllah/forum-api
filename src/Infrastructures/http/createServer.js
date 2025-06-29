@@ -7,11 +7,12 @@ const authentications = require('../../Interfaces/http/api/authentications');
 const threads = require('../../Interfaces/http/api/threads');
 const comments = require('../../Interfaces/http/api/comments');
 const replies = require('../../Interfaces/http/api/replies');
+const config = require('../../Commons/config');
 
 const createServer = async (container) => {
   const server = Hapi.server({
-    host: process.env.HOST,
-    port: process.env.PORT,
+    host: config.app.host,
+    port: config.app.port,
   });
 
   await server.register([
@@ -20,13 +21,13 @@ const createServer = async (container) => {
     }
   ])
 
-  server.auth.strategy("forumapi_jwt", "jwt", {
-    keys: process.env.ACCESS_TOKEN_KEY,
+  server.auth.strategy(config.auth.jwtStrategy, "jwt", {
+    keys: config.auth.accessTokenKey,
     verify: {
       aud: false,
       iss: false,
       sub: false,
-      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+      maxAgeSec: config.auth.accessTokenAge,
     },
     validate: (artifacts) => ({
       isValid: true,

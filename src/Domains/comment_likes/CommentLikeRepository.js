@@ -3,7 +3,7 @@ class CommentLikeRepository {
     throw new Error('COMMENT_LIKE_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
   
-  async deleteCommentLike(commentId) {
+  async deleteCommentLike(deleteCommentLike) {
     throw new Error('COMMENT_LIKE_REPOSITORY.METHOD_NOT_IMPLEMENTED');
   }
 

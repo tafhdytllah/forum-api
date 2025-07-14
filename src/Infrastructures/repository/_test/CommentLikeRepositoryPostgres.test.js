@@ -71,8 +71,7 @@ describe('CommentLikeRepositoryPostgres', () => {
 
       const commentLike = await CommentLikesTableTestHelper.findCommentLikeById('comment-like-123');
 
-      expect(addedCommentLikes).toHaveLength(1);
-      expect(addedCommentLikes[0].id).toEqual('comment-like-123');
+      expect(addedCommentLikes).toEqual('comment-like-123');
       expect(commentLike).toHaveLength(1);
       expect(commentLike[0]).toMatchObject({
         id: 'comment-like-123',

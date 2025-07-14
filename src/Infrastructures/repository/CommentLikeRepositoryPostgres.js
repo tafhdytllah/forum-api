@@ -22,7 +22,7 @@ class CommentLikeRepositoryPostgres extends CommentLikeRepository {
 
       const result = await this._pool.query(query);
 
-      return result.rows;
+      return result.rows[0].id;
     } catch (error) {
       throw new InvariantError('comment like gagal ditambahkan');
     }

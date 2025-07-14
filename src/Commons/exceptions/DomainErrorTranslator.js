@@ -31,6 +31,8 @@ DomainErrorTranslator._directories = {
   'DELETE_REPLY.PAYLOAD_NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('tidak dapat menghapus reply karena tipe data tidak sesuai'),
   'THREAD_DETAIL.NOT_CONTAIN_NEEDED_PROPERTY': new InvariantError('tidak dapat mengambil detail thread karena properti yang dibutuhkan tidak ada'),
   'THREAD_DETAIL.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('tidak dapat mengambil detail thread karena tipe data tidak sesuai'),
+  'ADD_COMMENT_LIKE.NOT_CONTAIN_NEEDED_PROPERTY': new InvariantError('tidak dapat menambahkan like comment karena properti yang dibutuhkan tidak ada'),
+  'ADD_COMMENT_LIKE.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError('tidak dapat menambahkan like comment karena tipe data tidak sesuai'),
 };
 
 module.exports = DomainErrorTranslator;

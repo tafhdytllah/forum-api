@@ -8,7 +8,8 @@ class CommentLikesHandler {
   async putCommentLikeHandler(request, h) {
     const { id: userId } = request.auth.credentials;
     const { threadId, commentId } = request.params;
-
+    console.log(threadId);
+    console.log(commentId);
     const addCommentLikeUseCase = this._container.getInstance(AddCommentLikeUseCase.name);
 
     await addCommentLikeUseCase.execute({ userId, threadId, commentId });

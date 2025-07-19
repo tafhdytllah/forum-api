@@ -24,7 +24,7 @@ describe('CommentLikeRepositoryPostgres', () => {
   describe('AddCommentLike function', () => {
 
     it('should throw InvariantError when addCommentLike fails to insert data', async () => {
-      const addCommentLikePayload = {
+      const payload = {
         userId: 'user-123',
         commentId: 'comment-123',
       };
@@ -40,11 +40,11 @@ describe('CommentLikeRepositoryPostgres', () => {
         fakeDateTimeFormatter
       );
 
-      await expect(commentLikeRepositoryPostgres.addCommentLike(addCommentLikePayload))
+      await expect(commentLikeRepositoryPostgres.addCommentLike(payload.userId, payload.commentId))
         .rejects.toThrow(InvariantError);
     });
 
-    it('should persist add comment like and return id', async () => {
+    it('should persist add comment like', async () => {
 
       const userId = 'user-123';
       const threadId = 'thread-123';
@@ -54,7 +54,7 @@ describe('CommentLikeRepositoryPostgres', () => {
       await ThreadsTableTestHelper.addThread({ id: threadId, owner: userId });
       await CommentsTableTestHelper.addComment({ id: commentId, threadId, owner: userId });
 
-      const addCommentLikePayload = {
+      const payload = {
         userId: userId,
         commentId: commentId,
       };
@@ -67,9 +67,9 @@ describe('CommentLikeRepositoryPostgres', () => {
         dateTimeFormatter
       );
 
-      const addedCommentLikes = await commentLikeRepositoryPostgres.addCommentLike(addCommentLikePayload);
+      const addedCommentLikes = await commentLikeRepositoryPostgres.addCommentLike(payload.userId, payload.commentId);
 
-      const commentLike = await CommentLikesTableTestHelper.findCommentLikeById('comment-like-123');
+      const commentLike = await CommentLikesTableTestHelper.findCommentLike(userId, commentId);
 
       expect(addedCommentLikes).toEqual('comment-like-123');
       expect(commentLike).toHaveLength(1);
@@ -93,7 +93,7 @@ describe('CommentLikeRepositoryPostgres', () => {
 
       const commentLikeRepositoryPostgres = new CommentLikeRepositoryPostgres(pool, {}, {});
 
-      await expect(commentLikeRepositoryPostgres.deleteCommentLike(payload))
+      await expect(commentLikeRepositoryPostgres.deleteCommentLike(payload.userId, payload.commentId))
         .rejects
         .toThrow(InvariantError);
     });
@@ -116,11 +116,51 @@ describe('CommentLikeRepositoryPostgres', () => {
 
       const commentLikeRepositoryPostgres = new CommentLikeRepositoryPostgres(pool, {}, {});
 
-      const deletedCommentLikeId = await commentLikeRepositoryPostgres.deleteCommentLike(payload);
-      const remainingCommentLikes = await CommentLikesTableTestHelper.findCommentLikeById(commentLikeId);
+      const deletedCommentLikeId = await commentLikeRepositoryPostgres.deleteCommentLike(payload.userId, payload.commentId);
+      const remainingCommentLikes = await CommentLikesTableTestHelper.findCommentLike(userId, commentId);
 
       expect(deletedCommentLikeId).toEqual(commentLikeId);
       expect(remainingCommentLikes).toHaveLength(0);
     });
-  })
+  });
+
+  describe('isLiked function', () => {
+
+    it('should return false when comment like is not found', async () => {
+      const payload = {
+        userId: 'user-123',
+        commentId: 'comment-123',
+      };
+
+      const commentLikeRepositoryPostgres = new CommentLikeRepositoryPostgres(pool, {}, {});
+
+      const isLiked = await commentLikeRepositoryPostgres.isLiked(payload.userId, payload.commentId);
+
+      expect(isLiked).toBe(false);
+    });
+
+    it('should return true when comment like is found', async () => {
+      const payload = {
+        userId: 'user-123',
+        commentId: 'comment-123',
+      };
+
+      const userId = 'user-123';
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+
+      await UsersTableTestHelper.addUser({ id: userId });
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: userId });
+      await CommentsTableTestHelper.addComment({ id: commentId, threadId, owner: userId });
+
+      const commentLikeRepositoryPostgres = new CommentLikeRepositoryPostgres(pool, {}, {});
+
+      await CommentLikesTableTestHelper.addCommentLike(payload.userId, payload.commentId);
+
+      const isLiked = await commentLikeRepositoryPostgres.isLiked(payload.userId, payload.commentId);
+
+      expect(isLiked).toBe(true);
+    });
+  });
+  
 });

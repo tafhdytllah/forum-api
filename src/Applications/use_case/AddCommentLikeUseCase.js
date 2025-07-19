@@ -1,21 +1,28 @@
 const AddCommentLike = require('../../Domains/comment_likes/entities/AddCommentLike');
-const AddedCommentLike = require('../../Domains/comment_likes/entities/AddedCommentLike');
 
 class AddCommentLikeUseCase {
-  constructor({ commentRepository, commentLikeRepository }) {
+  constructor({ commentRepository, threadRepository, commentLikeRepository }) {
     this._commentRepository = commentRepository;
+    this._threadRepository = threadRepository;
     this._commentLikeRepository = commentLikeRepository;
   }
 
-  async execute({ userId, commentId }) {
+  async execute({ userId, threadId, commentId }) {
 
-    const addCommentLike = new AddCommentLike({ userId, commentId });
-    
+    const addCommentLike = new AddCommentLike({ userId, threadId, commentId });
+
+    await this._threadRepository.verifyAvailableThread(addCommentLike.threadId);
+
     await this._commentRepository.verifyAvailableComment(addCommentLike.commentId);
-    
-    const addedCommentLike = await this._commentLikeRepository.addCommentLike(addCommentLike);
-    
-    return new AddedCommentLike(addedCommentLike);
+
+    const isAlreadyLiked = await this._commentLikeRepository.isLiked(addCommentLike.userId, addCommentLike.commentId);
+
+    if (isAlreadyLiked) {
+      await this._commentLikeRepository.deleteCommentLike(addCommentLike.userId, addCommentLike.commentId);
+    } else {
+      await this._commentLikeRepository.addCommentLike(addCommentLike.userId, addCommentLike.commentId);
+    }
+
   }
 }
 

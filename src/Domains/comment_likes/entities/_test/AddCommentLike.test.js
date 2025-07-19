@@ -4,6 +4,7 @@ describe('a AddCommentLike entities', () => {
   it('should throw error when payload did not contain needed property', () => {
     const payload = {
       // userId: 'user-123',
+      threadId: 'thread-123',
       commentId: 'comment-123',
     };
 
@@ -14,6 +15,7 @@ describe('a AddCommentLike entities', () => {
 
     const payload = {
       userId: {},
+      threadId: [],
       commentId: 123,
     };
 
@@ -24,11 +26,13 @@ describe('a AddCommentLike entities', () => {
 
     const payload = {
       userId: 'user-123',
+      threadId: 'thread-123',
       commentId: 'comment-123',
     };
     const addCommentLike = new AddCommentLike(payload);
 
     expect(addCommentLike.userId).toEqual(payload.userId);
+    expect(addCommentLike.threadId).toEqual(payload.threadId);
     expect(addCommentLike.commentId).toEqual(payload.commentId);
   });
 });

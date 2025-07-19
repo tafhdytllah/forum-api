@@ -15,10 +15,10 @@ const CommentLikesTableTestHelper = {
     await pool.query(query);
   },
 
-  async findCommentLikeById(id) {
+  async findCommentLike(userId, commentId) {
     const query = {
-      text: 'SELECT * FROM user_comment_likes WHERE id = $1',
-      values: [id],
+      text: 'SELECT * FROM user_comment_likes WHERE user_id = $1 AND comment_id = $2',
+      values: [userId, commentId],
     };
 
     const result = await pool.query(query);

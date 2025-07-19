@@ -10,7 +10,7 @@ class CommentLikeRepositoryPostgres extends CommentLikeRepository {
     this._dateTimeFormatter = dateTimeFormatter;
   }
 
-  async addCommentLike({ userId, commentId }) {
+  async addCommentLike( userId, commentId ) {
     try {
       const id = `comment-like-${this._idGenerator()}`;
       const createdAt = this._dateTimeFormatter.formatDateTime(new Date());
@@ -28,7 +28,7 @@ class CommentLikeRepositoryPostgres extends CommentLikeRepository {
     }
   }
 
-  async deleteCommentLike({ userId, commentId }) {
+  async deleteCommentLike( userId, commentId ) {
     const query = {
       text: 'DELETE FROM user_comment_likes WHERE user_id = $1 AND comment_id = $2 RETURNING id',
       values: [userId, commentId],
@@ -43,6 +43,23 @@ class CommentLikeRepositoryPostgres extends CommentLikeRepository {
     return result.rows[0].id;
   }
 
+
+  async isLiked( userId, commentId ) {
+    const query = {
+      text: `
+        SELECT 1 
+        FROM user_comment_likes 
+        WHERE user_id = $1 
+          AND comment_id = $2
+        LIMIT 1
+      `,
+      values: [userId, commentId],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rowCount > 0;
+  }
 }
 
 module.exports = CommentLikeRepositoryPostgres;

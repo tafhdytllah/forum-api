@@ -8,6 +8,7 @@ const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
 const RepliesTableTestHelper = require('../../../../tests/RepliesTableTestHelper');
 const InvariantError = require('../../../Commons/exceptions/InvariantError');
+const CommentLikesTableTestHelper = require('../../../../tests/CommentLikesTableTestHelper');
 
 describe('ThreadRepositoryPostgres', () => {
   afterEach(async () => {
@@ -465,7 +466,7 @@ describe('ThreadRepositoryPostgres', () => {
 
     });
 
-    it('should return thread rows with commens and replies is deleted', async () => {
+    it('should return thread rows with comments and replies is deleted', async () => {
       const getThreadPayload = {
         threadId: 'thread-123',
       };
@@ -597,6 +598,79 @@ describe('ThreadRepositoryPostgres', () => {
       expect(result3.reply_is_deleted).toBeNull();
       expect(result3.reply_owner_username).toBeNull();
 
+    });
+
+    it('should return thread rows with comments and likes', async () => {
+      const getThreadPayload = {
+        threadId: 'thread-123',
+      };
+
+      const expectedResult = [
+        {
+          thread_id: 'thread-123',
+          title: 'Sample Thread',
+          body: 'Sample Body',
+          thread_date: '2025-05-15T22:00:00+07:00',
+          thread_owner_username: 'user111',
+          comment_id: 'comment-1',
+          comment_content: 'Sample Comment 1',
+          comment_date: '2025-05-15T22:00:00+07:00',
+          comment_owner_username: 'user222',
+          comment_is_deleted: false,
+          reply_id: null,
+          reply_content: null,
+          reply_date: null,
+          reply_comment_id: null,
+          reply_is_deleted: null,
+          reply_owner_username: null,
+          like_id: 'comment-like-123',
+          like_comment_id: 'comment-1',
+          like_count: "1",
+        },
+        {
+          thread_id: 'thread-123',
+          title: 'Sample Thread',
+          body: 'Sample Body',
+          thread_date: '2025-05-15T22:00:00+07:00',
+          thread_owner_username: 'user111',
+          comment_id: 'comment-2',
+          comment_content: 'Sample Comment 2',
+          comment_date: '2025-05-15T22:00:00+07:00',
+          comment_owner_username: 'user333',
+          comment_is_deleted: false,
+          reply_id: null,
+          reply_content: null,
+          reply_date: null,
+          reply_comment_id: null,
+          reply_is_deleted: null,
+          reply_owner_username: null,
+          like_id: null,
+          like_comment_id: null,
+          like_count: "0",
+        },
+      ];
+
+      await UsersTableTestHelper.addUser({ id: 'user-111', username: 'user111' });
+      await UsersTableTestHelper.addUser({ id: 'user-222', username: 'user222' });
+      await UsersTableTestHelper.addUser({ id: 'user-333', username: 'user333' });
+
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', title: 'Sample Thread', body: 'Sample Body', owner: 'user-111', date: '2025-05-15T22:00:00+07:00' });
+
+      await CommentsTableTestHelper.addComment({ id: 'comment-1', threadId: 'thread-123', content: 'Sample Comment 1', owner: 'user-222', date: '2025-05-15T22:00:00+07:00' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-2', threadId: 'thread-123', content: 'Sample Comment 2', owner: 'user-333', date: '2025-05-15T22:00:00+07:00' });
+
+      await CommentLikesTableTestHelper.addCommentLike({ id: 'comment-like-123', userId: 'user-111', commentId: 'comment-1', });
+
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {}, {});
+
+      const results = await threadRepositoryPostgres.getThread(getThreadPayload.threadId);
+
+      expect(results.length).toEqual(2);
+
+      results.forEach((row, index) => {
+        const expected = expectedResult[index];
+        expect(row).toMatchObject(expected);
+      });
     });
   });
 

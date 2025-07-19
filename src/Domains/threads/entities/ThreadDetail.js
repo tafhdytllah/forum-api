@@ -34,14 +34,17 @@ class ThreadDetail {
 
   _toThreadDetailFromRows(rows) {
     const commentMap = new Map();
+    const replyMap = new Map();
 
     for (const row of rows) {
+
       if (row.comment_id && !commentMap.has(row.comment_id)) {
         commentMap.set(row.comment_id, {
           id: row.comment_id,
           username: row.comment_owner_username,
           date: row.comment_date,
           content: row.comment_is_deleted ? '**komentar telah dihapus**' : row.comment_content,
+          likeCount: Number(row.like_count || 0),
           replies: [],
         });
       }
@@ -55,14 +58,23 @@ class ThreadDetail {
           content: row.reply_is_deleted ? '**balasan telah dihapus**' : row.reply_content,
         };
 
-        commentMap.get(row.comment_id).replies.push(reply);
+        if (!replyMap.has(row.comment_id)) {
+          replyMap.set(row.comment_id, []);
+        }
+
+        replyMap.get(row.comment_id).push(reply);
       }
     }
 
-    const comments = Array.from(commentMap.values()).map(comment => ({
-      ...comment,
-      replies: comment.replies.sort((a, b) => new Date(a.date) - new Date(b.date)),
-    }));
+    const comments = Array.from(commentMap.values()).map(comment => {
+      const replies = replyMap.get(comment.id) || [];
+      replies.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      return {
+        ...comment,
+        replies,
+      };
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     return {
       thread: rows[0],

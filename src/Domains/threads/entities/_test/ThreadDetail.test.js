@@ -1,15 +1,17 @@
 const ThreadDetail = require('../ThreadDetail');
 
-describe('a ThreadDetail entities', () => {
+describe('ThreadDetail entity', () => {
   it('should throw error when rows is empty', () => {
-    expect(() => new ThreadDetail([])).toThrowError('THREAD_DETAIL.NOT_CONTAIN_ROWS');
+    expect(() => new ThreadDetail([]))
+      .toThrowError('THREAD_DETAIL.NOT_CONTAIN_ROWS');
   });
 
   it('should throw error when rows is not array', () => {
-    expect(() => new ThreadDetail('invalid')).toThrowError('THREAD_DETAIL.NOT_CONTAIN_ROWS');
+    expect(() => new ThreadDetail('invalid'))
+      .toThrowError('THREAD_DETAIL.NOT_CONTAIN_ROWS');
   });
 
-  it('should throw error when thread object did not contain needed property', () => {
+  it('should throw error when thread object lacks needed property', () => {
     const rows = [
       {
         // thread_id missing
@@ -17,14 +19,14 @@ describe('a ThreadDetail entities', () => {
         body: 'Body',
         thread_date: '2025-06-17T00:00:00.000Z',
         thread_owner_username: 'user1',
-        comment_id: null,
       },
     ];
 
-    expect(() => new ThreadDetail(rows)).toThrowError('THREAD_DETAIL.NOT_CONTAIN_NEEDED_PROPERTY');
+    expect(() => new ThreadDetail(rows))
+      .toThrowError('THREAD_DETAIL.NOT_CONTAIN_NEEDED_PROPERTY');
   });
 
-  it('should throw error when thread property has invalid type', () => {
+  it('should throw error when thread property has invalid data type', () => {
     const rows = [
       {
         thread_id: 123, // should be string
@@ -32,14 +34,14 @@ describe('a ThreadDetail entities', () => {
         body: 'Body',
         thread_date: '2025-06-17T00:00:00.000Z',
         thread_owner_username: 'user1',
-        comment_id: null,
       },
     ];
 
-    expect(() => new ThreadDetail(rows)).toThrowError('THREAD_DETAIL.NOT_MEET_DATA_TYPE_SPECIFICATION');
+    expect(() => new ThreadDetail(rows))
+      .toThrowError('THREAD_DETAIL.NOT_MEET_DATA_TYPE_SPECIFICATION');
   });
 
-  it('should correctly map thread, comments, and replies from raw rows', () => {
+  it('should correctly map thread, comments, replies, and likeCount', () => {
     const rows = [
       {
         thread_id: 'thread-1',
@@ -53,6 +55,7 @@ describe('a ThreadDetail entities', () => {
         comment_date: '2025-06-17T01:00:00.000Z',
         comment_owner_username: 'user2',
         comment_is_deleted: false,
+        like_count: 2, // contoh like
 
         reply_id: 'reply-1',
         reply_content: 'Balasan pertama',
@@ -73,6 +76,7 @@ describe('a ThreadDetail entities', () => {
         comment_date: '2025-06-17T01:00:00.000Z',
         comment_owner_username: 'user2',
         comment_is_deleted: false,
+        like_count: 2,
 
         reply_id: 'reply-2',
         reply_content: 'Balasan kedua',
@@ -93,6 +97,7 @@ describe('a ThreadDetail entities', () => {
         comment_date: '2025-06-17T04:00:00.000Z',
         comment_owner_username: 'user5',
         comment_is_deleted: true,
+        like_count: null,
 
         reply_id: null,
         reply_content: null,
@@ -115,6 +120,7 @@ describe('a ThreadDetail entities', () => {
           username: 'user2',
           date: '2025-06-17T01:00:00.000Z',
           content: 'Komentar pertama',
+          likeCount: 2,
           replies: [
             {
               id: 'reply-1',
@@ -137,6 +143,7 @@ describe('a ThreadDetail entities', () => {
           username: 'user5',
           date: '2025-06-17T04:00:00.000Z',
           content: '**komentar telah dihapus**',
+          likeCount: 0, // ← default 0 karena null
           replies: [],
         },
       ],

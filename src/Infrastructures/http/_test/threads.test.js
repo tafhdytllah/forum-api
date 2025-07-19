@@ -282,7 +282,6 @@ describe('/threads endpoint', () => {
 
     });
 
-
     it('should respond 404 when thread not found', async () => {
       const server = await createServer(container);
 
@@ -295,6 +294,131 @@ describe('/threads endpoint', () => {
       expect(response.statusCode).toEqual(404);
       expect(responseJson.status).toEqual('fail');
       expect(responseJson.message).toEqual('thread tidak ditemukan');
+    });
+
+    it('should respond 200 and return thread detail with likeCount on comment', async () => {
+      const server = await createServer(container);
+
+      const addUserPayload = {
+        username: 'dicoding',
+        password: 'secret',
+        fullname: 'Test User',
+      };
+
+      const loginPayload = {
+        username: addUserPayload.username,
+        password: addUserPayload.password,
+      };
+
+      const addThreadPayload = {
+        title: 'ini title',
+        body: 'ini body',
+      };
+
+      const addCommentPayload = {
+        content: 'ini comment',
+      };
+
+      const addReplyPayload = {
+        content: 'ini reply',
+      };
+
+      // Register user
+      await server.inject({
+        method: 'POST',
+        url: '/users',
+        payload: addUserPayload,
+      });
+
+      // Login
+      const loginResponse = await server.inject({
+        method: 'POST',
+        url: '/authentications',
+        payload: loginPayload,
+      });
+
+      const loginResponseJson = JSON.parse(loginResponse.payload);
+      const accessToken = loginResponseJson.data.accessToken;
+
+      // Get user id
+      const users = await UsersTableTestHelper.findUserByUsername(addUserPayload.username);
+      const userId = users[0].id;
+
+      // Create thread
+      const addedThreadResponse = await server.inject({
+        method: 'POST',
+        url: '/threads',
+        payload: addThreadPayload,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const addedThread = JSON.parse(addedThreadResponse.payload).data.addedThread;
+
+      // Create comment
+      const addedCommentResponse = await server.inject({
+        method: 'POST',
+        url: `/threads/${addedThread.id}/comments`,
+        payload: addCommentPayload,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const commentId = JSON.parse(addedCommentResponse.payload).data.addedComment.id;
+
+      // Create reply
+      await server.inject({
+        method: 'POST',
+        url: `/threads/${addedThread.id}/comments/${commentId}/replies`,
+        payload: addReplyPayload,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // Like comment
+      await server.inject({
+        method: 'PUT',
+        url: `/threads/${addedThread.id}/comments/${commentId}/likes`,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // GET thread
+      const getThreadResponse = await server.inject({
+        method: 'GET',
+        url: `/threads/${addedThread.id}`,
+      });
+
+      // Assertions
+      const responseJson = JSON.parse(getThreadResponse.payload);
+      expect(getThreadResponse.statusCode).toEqual(200);
+      expect(responseJson.status).toEqual('success');
+
+      const thread = responseJson.data.thread;
+      expect(thread).toBeDefined();
+      expect(thread.id).toEqual(addedThread.id);
+      expect(thread.title).toEqual(addThreadPayload.title);
+      expect(thread.body).toEqual(addThreadPayload.body);
+      expect(thread.username).toEqual(addUserPayload.username);
+
+      expect(Array.isArray(thread.comments)).toBe(true);
+      expect(thread.comments).toHaveLength(1);
+
+      const comment = thread.comments[0];
+      expect(comment.content).toEqual(addCommentPayload.content);
+      expect(comment.username).toEqual(addUserPayload.username);
+      expect(comment.likeCount).toEqual(1); // Test like count
+
+      expect(Array.isArray(comment.replies)).toBe(true);
+      expect(comment.replies).toHaveLength(1);
+
+      const reply = comment.replies[0];
+      expect(reply.content).toEqual(addReplyPayload.content);
+      expect(reply.username).toEqual(addUserPayload.username);
     });
   });
 

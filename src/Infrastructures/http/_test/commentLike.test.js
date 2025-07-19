@@ -174,7 +174,7 @@ describe('/threads/{threadId}/comments/{commentId}/likes endpoint', () => {
       // verify response
       expect(likeResponse.statusCode).toEqual(404);
       const likeResponseJson = JSON.parse(likeResponse.payload);
-      console.log(likeResponseJson);
+
       expect(likeResponseJson.status).toEqual('fail');
     });
 
